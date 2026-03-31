@@ -1,0 +1,5 @@
+{
+    "dataset_folder_path": "/path/to/your/base/dataset/folder",
+    "dataset_csv_path": "/path/to/your/anonymous-metadata.csv",
+    "dataset_images_path": "/path/to/your/images/folder"
+}
