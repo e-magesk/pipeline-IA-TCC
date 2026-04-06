@@ -32,21 +32,6 @@ class MyMobilenet (nn.Module):
                 else:
                     raise Exception(
                         "comb_config must be a list or int to define the number of feat maps and the metadata")
-            elif comb_method == 'concat':
-                if not isinstance(comb_config, int):
-                    raise Exception("comb_config must be int for 'concat' method")
-                _n_meta_data = comb_config
-                self.comb = 'concat'
-            elif comb_method == 'metanet':
-                if isinstance(comb_config, int):
-                    self.comb_feat_maps = 20
-                    self.comb = MetaNet(comb_config, 40, 32)
-                elif isinstance(comb_config, list):
-                    self.comb = MetaNet(comb_config[0], comb_config[1], comb_config[2])
-                    self.comb_feat_maps = comb_config[2]
-                else:
-                    raise Exception(
-                        "comb_config must be a list or int to define the number of feat maps and the metadata")
             else:
                 raise Exception("There is no comb_method called " + comb_method + ". Please, check this out.")
         else:

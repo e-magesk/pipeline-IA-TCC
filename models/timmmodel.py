@@ -42,11 +42,6 @@ class TIMMModel(nn.Module):
                 else:
                     raise Exception(
                         "comb_config must be a list or int to define the number of feat maps and the metadata")
-            elif comb_method == 'concat':
-                if not isinstance(comb_config, int):
-                    raise Exception("comb_config must be int for 'concat' method")
-                _n_meta_data = comb_config
-                self.comb = 'concat'
             else:
                 raise Exception("There is no comb_method called " + comb_method + ". Please, check this out.")
         else:
