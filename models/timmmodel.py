@@ -1,14 +1,7 @@
 import timm
-import torch
 from torch import nn
 from metablock import MetaBlock
 
-import sys
-import json
-with open("../../config.json") as json_file:
-    _CONFIG = json.load(json_file)
-sys.path.insert(0,_CONFIG['raug_full_path'])
-from raug.checkpoints import load_model
 
 # TODO: add neurons_reducer_block support
 class TIMMModel(nn.Module):
@@ -22,10 +15,6 @@ class TIMMModel(nn.Module):
             pretrained=not initial_weights_path,
             num_classes=0,
         )
-
-        if initial_weights_path:
-            print(f'Loading weights at: {initial_weights_path}')
-            self.feature_extractor = load_model(initial_weights_path, self, strict=False).feature_extractor
 
         _n_meta_data = 0
         if comb_method is not None:
@@ -63,9 +52,6 @@ class TIMMModel(nn.Module):
 
         if self.comb == None:
             x = x.view(x.size(0), -1)  # flatting
-        elif self.comb == 'concat':
-            x = x.view(x.size(0), -1)  # flatting
-            x = torch.cat([x, meta_data], dim=1)  # concatenation
         elif isinstance(self.comb, MetaBlock):
             x = x.view(x.size(0), self.comb_feat_maps, 32, -1).squeeze(-1)  # getting the feature maps
             x = self.comb(x, meta_data.float())  # applying metablock

@@ -1,14 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Autor: André Pacheco
-Email: pacheco.comp@gmail.com
-"""
 
-import torch
 from torch import nn
 from metablock import MetaBlock
-from metanet import MetaNet
-import warnings
 
 
 class MyEffnet (nn.Module):
@@ -49,10 +42,6 @@ class MyEffnet (nn.Module):
                 nn.ReLU(),
                 nn.Dropout(p=p_dropout)
             )
-        else:
-            if comb_method == 'concat':
-                warnings.warn("You're using concat with neurons_reducer_block=0. Make sure you're doing it right!")
-            self.reducer_block = None
 
         # Here comes the extra information (if applicable)
         if neurons_reducer_block > 0:
@@ -76,20 +65,9 @@ class MyEffnet (nn.Module):
             x = x.view(x.size(0), -1)  # flatting
             if self.reducer_block is not None:
                 x = self.reducer_block(x)  # feat reducer block
-        elif self.comb == 'concat':
-            x = x.view(x.size(0), -1)  # flatting
-            if self.reducer_block is not None:
-                x = self.reducer_block(x)  # feat reducer block. In this case, it must be defined
-            x = torch.cat([x, meta_data], dim=1)  # concatenation
         elif isinstance(self.comb, MetaBlock):
             x = x.view(x.size(0), self.comb_feat_maps, 32, -1).squeeze(-1)  # getting the feature maps
             x = self.comb(x, meta_data.float())  # applying metablock
-            x = x.view(x.size(0), -1)  # flatting
-            if self.reducer_block is not None:
-                x = self.reducer_block(x)  # feat reducer block
-        elif isinstance(self.comb, MetaNet):
-            x = x.view(x.size(0), self.comb_feat_maps, 8, 8).squeeze(-1)  # getting the feature maps
-            x = self.comb(x, meta_data.float())  # applying metanet
             x = x.view(x.size(0), -1)  # flatting
             if self.reducer_block is not None:
                 x = self.reducer_block(x)  # feat reducer block
