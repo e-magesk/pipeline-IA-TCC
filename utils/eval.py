@@ -15,7 +15,7 @@ import torch.nn as nn
 import torch.nn.functional as nnF
 from .metrics import Metrics, accuracy
 from .checkpoints import load_model
-from .utils.classification_metrics import AVGMetrics
+from .classification_metrics import AVGMetrics
 from tqdm import tqdm
 
 

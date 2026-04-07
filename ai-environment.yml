@@ -34,7 +34,7 @@ dependencies:
       - ipykernel==6.29.4
       
       # Experiment Tracking & Web
-      - sacred==0.8.5
+      - sacred==0.8.7
       - tensorboardx==2.6.2.2
       - fastapi==0.111.0
       - uvicorn==0.30.1
@@ -45,3 +45,4 @@ dependencies:
       - pillow==10.2.0
       - python-dotenv==1.0.1
       - requests==2.32.3
+      - setuptools==82.0.1

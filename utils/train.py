@@ -22,11 +22,9 @@ import torch.optim as optim
 from tqdm import tqdm
 from .checkpoints import load_model, save_model
 from .eval import metrics_for_eval
-# from torch.utils.tensorboard import SummaryWriter
 from tensorboardX import SummaryWriter
 from .metrics import accuracy, TrainHistory
-from .utils.classification_metrics import AVGMetrics
-from .utils.telegram_bot import TelegramBot
+from .classification_metrics import AVGMetrics
 import logging
 import time
 

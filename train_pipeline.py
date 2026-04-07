@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from sacred import Experiment
-# from models_hub import set_class_model
+from models.models import set_class_model
 from sacred.observers import FileStorageObserver
 from sentence_transformers import SentenceTransformer
 ######################################################################################
@@ -28,21 +28,20 @@ from sentence_transformers import SentenceTransformer
 
 # Getting the local configurations
 CLASS_TYPE = "diag" # triage or diag
+IMG_TYPE = "clinical" # clinical, dermatoscope or both
+
 with open("./config.json") as json_file:
     _LOCAL_CONFIG = json.load(json_file)
-_DATASET_BASE_PATH = _LOCAL_CONFIG["dataset_folder_path"]
-_CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, "pad-ufes-25-diag_folders_raw.csv")
-_JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, "anamnese_diag_raw.json")
-_IMGS_FOLDER_TRAIN = os.path.join(_DATASET_BASE_PATH, "images")
 
-if CLASS_TYPE == "triage":
-    _CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, "pad-ufes-25-triage_folders_raw.csv")
-    _JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, "anamnese_triage_raw.json")
+_DATASET_BASE_PATH = _LOCAL_CONFIG["dataset_folder_path"]
+_CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-25-{CLASS_TYPE}_{IMG_TYPE}_folders_raw.csv")
+_JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_{IMG_TYPE}.json")
+_IMGS_FOLDER_TRAIN = os.path.join(_LOCAL_CONFIG['dataset_images_path'])
 
 # Avoiding the tokenizers warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-TARGET_COLUMN = "clinicalMacroCID"
+TARGET_COLUMN = "histoMacroCID"
 TARGET_NUMBER_COLUMN = "diagnostic-number"
 IMG_COLUMN = "img-id"
 
@@ -60,14 +59,14 @@ def cnfg():
     # Models configurations
     _use_meta_data = True
     _neurons_reducer_block = 0
-    _comb_method = "metablock" # metanet, concat, or metablock
+    _comb_method = "metablock" # metablock
     _comb_config = [64, 768] # number of metadata
     _batch_size = 30
     _epochs = 50
 
     _llm_type = "small" # small
     _model_name = 'resnet-50'
-    _save_folder = f"results/{CLASS_TYPE}_{_model_name}_{_comb_method}SE_V2_FITZ__{_llm_type}_folder_{str(_folder)}_{str(time.time()).replace('.', '')}"
+    _save_folder = f"results/{CLASS_TYPE}_{_model_name}_{_comb_method}_SE_V2_FITZ__{_llm_type}_folder_{str(_folder)}_{str(time.time()).replace('.', '')}"
 
     # Training variables
     _best_metric = "loss"

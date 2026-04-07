@@ -13,9 +13,9 @@ If you find any bug or have some suggestion, please, email me.
 import os
 import torch
 import numpy as np
-from .utils import classification_metrics as cmet
 import pandas as pd
 import matplotlib.pyplot as plt
+from utils import classification_metrics as cmet
 
 
 class Metrics:
