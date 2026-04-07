@@ -76,9 +76,8 @@ def _train_epoch (model, optimizer, loss_fn, data_loader, c_epoch, t_epoch, devi
             # In data we may have imgs, labels and extra info. If extra info is [], it means we don't have it
             # for the this training case. Imgs came in data[0], labels in data[1] and extra info in data[2]
             try:
-                imgs_batch, labels_batch, metadata_batch, _, _ = data
+                imgs_batch, labels_batch, metadata_batch, _ = data
             except ValueError:
-                print("No meta-data")
                 imgs_batch, labels_batch = data
                 metadata_batch = []
             except:

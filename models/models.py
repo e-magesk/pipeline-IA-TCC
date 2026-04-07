@@ -1,11 +1,10 @@
-from effnet import MyEffnet
-from densenet import MyDensenet
-from mobilenet import MyMobilenet
-from resnet import MyResnet
-from vggnet import MyVGGNet
+from .effnet import MyEffnet
+from .mobilenet import MyMobilenet
+from .resnet import MyResnet
+from .vggnet import MyVGGNet
 from torchvision import models
 from efficientnet_pytorch import EfficientNet
-from timmmodel import TIMMModel
+from .timmmodel import TIMMModel
 
 ###############################################################################################
 # Variables and Constants

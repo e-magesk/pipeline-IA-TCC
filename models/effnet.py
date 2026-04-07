@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from torch import nn
-from metablock import MetaBlock
+from .metablock import MetaBlock
 
 
 class MyEffnet (nn.Module):
@@ -42,6 +42,8 @@ class MyEffnet (nn.Module):
                 nn.ReLU(),
                 nn.Dropout(p=p_dropout)
             )
+        else:
+            self.reducer_block = None        
 
         # Here comes the extra information (if applicable)
         if neurons_reducer_block > 0:

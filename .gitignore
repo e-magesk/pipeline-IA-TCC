@@ -1,3 +1,9 @@
 # PERSONAL DATA FOLDER
 data/
+
+# PYTHON
 utils/__pycache__/
+models/__pycache__/
+
+# MODELS
+results/

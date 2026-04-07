@@ -11,6 +11,7 @@ import os
 import json
 import time
 import torch
+import warnings
 import numpy as np
 import pandas as pd
 import torch.nn as nn
@@ -34,12 +35,15 @@ with open("./config.json") as json_file:
     _LOCAL_CONFIG = json.load(json_file)
 
 _DATASET_BASE_PATH = _LOCAL_CONFIG["dataset_folder_path"]
-_CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-25-{CLASS_TYPE}_{IMG_TYPE}_folders_raw.csv")
+_CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_{IMG_TYPE}_folders_raw.csv")
 _JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_{IMG_TYPE}.json")
 _IMGS_FOLDER_TRAIN = os.path.join(_LOCAL_CONFIG['dataset_images_path'])
 
 # Avoiding the tokenizers warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# Avoiding huggingface warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hub")
 
 TARGET_COLUMN = "histoMacroCID"
 TARGET_NUMBER_COLUMN = "diagnostic-number"

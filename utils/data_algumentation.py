@@ -15,7 +15,7 @@ class ImgTrainTransform:
             A.Resize(size[0], size[1]),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.2),
-            A.Affine(rotate=(-120, 120), mode=cv2.BORDER_REFLECT, p=0.25),
+            A.Affine(rotate=(-120, 120), border_mode=cv2.BORDER_REFLECT, p=0.25),
             A.GaussianBlur(sigma_limit=(0, 3.0) , p=0.25), #VERIFICADA
 
             # noise

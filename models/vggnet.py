@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from torch import nn
-from metablock import MetaBlock
+from .metablock import MetaBlock
 
 
 class MyVGGNet (nn.Module):
@@ -49,7 +49,9 @@ class MyVGGNet (nn.Module):
                 nn.ReLU(),
                 nn.Dropout(p=p_dropout)
             )
-
+        else:
+            self.reducer_block = None
+            
         # Here comes the extra information (if applicable)
         if neurons_reducer_block > 0:
             self.classifier = nn.Linear(neurons_reducer_block + _n_meta_data, num_class)

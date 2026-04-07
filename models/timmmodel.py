@@ -1,6 +1,6 @@
 import timm
 from torch import nn
-from metablock import MetaBlock
+from .metablock import MetaBlock
 
 
 # TODO: add neurons_reducer_block support

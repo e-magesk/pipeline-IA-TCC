@@ -65,7 +65,7 @@ def metrics_for_eval (model, data_loader, device, loss_fn, topk=2, get_balanced_
                 # In data we may have imgs, labels and extra info. If extra info is [], it means we don't have it
                 # for the this training case. Imgs came in data[0], labels in data[1] and extra info in data[2]
                 try:
-                    images_batch, labels_batch, meta_data_batch,_ , _ = data
+                    images_batch, labels_batch, meta_data_batch,_  = data
                 except ValueError:
                     images_batch, labels_batch = data
                     meta_data_batch = []
