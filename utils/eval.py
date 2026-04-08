@@ -192,7 +192,7 @@ def test_model (model, data_loader, checkpoint_path=None, loss_fn=None, device=N
             # for the this training case. Images came in data[0], labels in data[1], meta_data in data[2], and image_id
             # in data[3]
             try:
-                images_batch, labels_batch, meta_data_batch, img_id, extra_data = data
+                images_batch, labels_batch, meta_data_batch, img_id = data
             except ValueError:
                 images_batch, labels_batch = data
                 meta_data_batch = []
@@ -239,7 +239,7 @@ def test_model (model, data_loader, checkpoint_path=None, loss_fn=None, device=N
                 pred_batch_np = pred_batch.cpu().numpy()
 
             # updating the scores
-            metrics.update_scores(labels_batch_np, pred_batch_np, img_id, extra_data)
+            metrics.update_scores(labels_batch_np, pred_batch_np, img_id)
 
             # Updating tqdm
             if metrics.metrics_names is None:
@@ -253,7 +253,7 @@ def test_model (model, data_loader, checkpoint_path=None, loss_fn=None, device=N
     metrics.add_metric_value("loss", loss_avg())
 
     # Getting the metrics
-    metrics.compute_metrics(group_by_extra_data=True)
+    metrics.compute_metrics()
 
     if save_pred or metrics.metrics_names is None:
         if full_path_pred is None:

@@ -70,7 +70,7 @@ def cnfg():
 
     _llm_type = "small" # small
     _model_name = 'resnet-50'
-    _save_folder = f"results/{CLASS_TYPE}_{_model_name}_{_comb_method}_SE_V2_FITZ__{_llm_type}_folder_{str(_folder)}_{str(time.time()).replace('.', '')}"
+    _save_folder = f"results/{CLASS_TYPE}_{IMG_TYPE}_{_model_name}_{_comb_method}_SE_V2_FITZ__{_llm_type}_folder_{str(_folder)}_{str(time.time()).replace('.', '')}"
 
     # Training variables
     _best_metric = "loss"

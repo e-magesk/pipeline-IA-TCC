@@ -13,9 +13,9 @@ If you find any bug or have some suggestion, please, email me.
 import os
 import torch
 import numpy as np
+import utils.classification_metrics as cmet
 import pandas as pd
 import matplotlib.pyplot as plt
-from utils import classification_metrics as cmet
 
 
 class Metrics:
@@ -82,7 +82,7 @@ class Metrics:
         self.topk = None
 
 
-    def compute_metrics (self, group_by_extra_data=False):
+    def compute_metrics (self):
         """
         This method computes all metrics defined in metrics_name.
         :return: it saves in self.metric_values all computed metrics
@@ -104,30 +104,13 @@ class Metrics:
             self.metrics_names = ["accuracy", "topk_accuracy", "balanced_accuracy",  "conf_matrix", "plot_conf_matrix",
                                   "precision_recall_report", "auc_and_roc_curve", "auc"]
         
-        if group_by_extra_data:
-            all_results = pd.DataFrame()
-            all_results['extra_data'] = self.extra_data
-            all_results['label_scores'] = self.label_scores
-            all_results['pred_scores'] = self.pred_scores.tolist()
-            unique_extra_data = list(set(self.extra_data))
-
+        
         for mets in self.metrics_names:
             if mets == "accuracy":
                 self.metrics_values["accuracy"] = cmet.accuracy(self.label_scores, self.pred_scores)
-                if group_by_extra_data == True:
-                    for value in unique_extra_data:
-                        mask = all_results['extra_data'] == value
-                        pred_scores = [list(map(float, pred)) for pred in all_results['pred_scores'][mask]]
-                        self.metrics_values["accuracy_f{}".format(value)] = cmet.accuracy(all_results['label_scores'][mask].values, np.array(pred_scores, dtype=np.float64))
-
                 
             elif mets == "balanced_accuracy":
                 self.metrics_values["balanced_accuracy"] = cmet.balanced_accuracy(self.label_scores, self.pred_scores)
-                if group_by_extra_data == True:
-                    for value in unique_extra_data:
-                        mask = all_results['extra_data'] == value
-                        pred_scores = [list(map(float, pred)) for pred in all_results['pred_scores'][mask]]
-                        self.metrics_values["balanced_accuracy_f{}".format(value)] = cmet.balanced_accuracy(all_results['label_scores'][mask].values, np.array(pred_scores, dtype=np.float64))
 
             elif mets == "topk_accuracy":
 
@@ -138,20 +121,6 @@ class Metrics:
                         self.topk = self.options["topk"]
 
                 self.metrics_values["topk_accuracy"] = cmet.topk_accuracy(self.label_scores, self.pred_scores, self.topk)
-
-                if group_by_extra_data == True:
-                    for value in unique_extra_data:
-                        mask = all_results['extra_data'] == value
-                        pred_scores = [list(map(float, pred)) for pred in all_results['pred_scores'][mask]]
-                        self.metrics_values["topk_accuracy_f{}".format(value)] = cmet.topk_accuracy(all_results['label_scores'][mask].values, np.array(pred_scores, dtype=np.float64), self.topk)
-            
-            elif mets == 'auc':
-                self.metrics_values["auc"] = cmet.roc_auc(self.label_scores, self.pred_scores)
-                # if group_by_extra_data == True:
-                #     for value in unique_extra_data:
-                #         mask = all_results['extra_data'] == value
-                #         pred_scores = [list(map(float, pred)) for pred in all_results['pred_scores'][mask]]
-                #         self.metrics_values["auc_f{}".format(value)] = cmet.roc_auc(all_results['label_scores'][mask].values, np.array(pred_scores, dtype=np.float64))
             
             elif mets == "conf_matrix":
                 
@@ -162,12 +131,6 @@ class Metrics:
                         normalize = self.options["normalize_conf_matrix"]
                 
                 self.metrics_values["conf_matrix"] = cmet.conf_matrix(self.label_scores, self.pred_scores, normalize)
-                if group_by_extra_data == True:
-                    for value in unique_extra_data:
-                        mask = all_results['extra_data'] == value
-                        pred_scores = [list(map(float, pred)) for pred in all_results['pred_scores'][mask]]
-                        self.metrics_values["conf_matrix_f{}".format(value)] = cmet.conf_matrix(all_results['label_scores'][mask].values, np.array(pred_scores, dtype=np.float64), normalize=False)
-
             elif mets == "plot_conf_matrix":
                 
                 # Checking if the class names are defined
@@ -195,17 +158,6 @@ class Metrics:
                     cm = cmet.conf_matrix(self.label_scores, self.pred_scores, normalize)
                 
                 cmet.plot_conf_matrix(cm, self.class_names, normalize, save_path, title)
-
-                if group_by_extra_data == True:
-                    for value in unique_extra_data:
-                        mask = all_results['extra_data'] == value
-                        if "conf_matrix_f{}".format(value) in self.metrics_values.keys():
-                            cm = self.metrics_values["conf_matrix_f{}".format(value)]
-                        else:
-                            pred_scores = [list(map(float, pred)) for pred in all_results['pred_scores'][mask]]
-                            cm = cmet.conf_matrix(all_results['label_scores'][mask].values, np.array(pred_scores, dtype=np.float64), normalize=False)
-                        title = "Confusion Matrix - f{}".format(value)
-                        cmet.plot_conf_matrix(cm, self.class_names, False, save_path.replace('.png', '_f{}.png'.format(value)), title)
                 
                 
             elif mets == "precision_recall_report":
@@ -213,15 +165,9 @@ class Metrics:
                 self.metrics_values["precision_recall_report"] = cmet.precision_recall_report(self.label_scores,
                                                                                               self.pred_scores,
                                                                                               self.class_names)
-                
-                if group_by_extra_data == True:
-                    for value in unique_extra_data:
-                        mask = all_results['extra_data'] == value
-                        pred_scores = [list(map(float, pred)) for pred in all_results['pred_scores'][mask]]
-                        self.metrics_values["precision_recall_report_f{}".format(value)] = cmet.precision_recall_report(all_results['label_scores'][mask].values,
-                                                                                                np.array(pred_scores, dtype=np.float64),
-                                                                                                self.class_names)
 
+            elif mets == 'auc':
+                self.metrics_values["auc"] = cmet.roc_auc(self.label_scores, self.pred_scores)
                 
             elif mets == "auc_and_roc_curve":
                 
@@ -244,18 +190,9 @@ class Metrics:
                 self.metrics_values["auc_and_roc_curve"] = cmet.auc_and_roc_curve(self.label_scores, self.pred_scores,
                                                                                   self.class_names, class_to_compute, 
                                                                                   save_path)
-                
-                # if group_by_extra_data == True:
-                #     for value in unique_extra_data:
-                #         mask = all_results['extra_data'] == value
-                #         pred_scores = [list(map(float, pred)) for pred in all_results['pred_scores'][mask]]
-                #         self.metrics_values["auc_and_roc_curve_f{}".format(value)] = cmet.auc_and_roc_curve(all_results['label_scores'][mask].values,
-                #                                                                                             np.array(pred_scores, dtype=np.float64),
-                #                                                                                             self.class_names, class_to_compute,
-                #                                                                                             save_path.replace('.png', '_f{}.png'.format(value)))
 
             if save_all_path is not None:
-                self.save_metrics(save_all_path, group_by_extra_data=group_by_extra_data)
+                self.save_metrics(save_all_path)
 
     def print (self):
         """
@@ -294,7 +231,7 @@ class Metrics:
         self.metrics_values[value_name] = value
 
 
-    def update_scores (self, label_batch, pred_batch, img_name_batch=None, extra_data_batch=None):
+    def update_scores (self, label_batch, pred_batch, img_name_batch=None):
         """
         The evaluation is made using batchs. So, every batch we get just a piece of the prediction. This method
         concatenate all prediction and labels in order to compute the metrics
@@ -306,7 +243,6 @@ class Metrics:
             self.label_scores = label_batch
             self.pred_scores = pred_batch
             self.img_names = img_name_batch
-            self.extra_data = extra_data_batch
         else:
             if pred_batch is not None:
                 self.pred_scores = np.concatenate((self.pred_scores, pred_batch))
@@ -314,11 +250,9 @@ class Metrics:
                 self.label_scores = np.concatenate((self.label_scores, label_batch))
             if img_name_batch is not None:
                 self.img_names = np.concatenate((self.img_names, img_name_batch))
-            if extra_data_batch is not None:
-                self.extra_data = np.concatenate((self.extra_data, extra_data_batch))
 
 
-    def save_metrics (self, folder_path, name="metrics.txt", group_by_extra_data=False):
+    def save_metrics (self, folder_path, name="metrics.txt"):
         """
         This method saves the computed metrics
         :param folder_path (string): the folder you'd like to save the metrics
@@ -351,36 +285,6 @@ class Metrics:
                     elif met == "auc_and_roc_curve":
                         resp = self.metrics_values[met]
                         f.write('- AUC:\n {}\n'.format(resp[0]))
-                f.close()
-
-        if group_by_extra_data == True:
-            unique_extra_data = list(set(self.extra_data))
-            for value in unique_extra_data:
-                filename = "metrics_fitzpatrick_{}.txt".format(value)
-
-                with open(os.path.join(folder_path, filename), "w") as f:
-                    f.write("- METRICS REPORT - fitzpatrick {}\n\n".format(value))
-
-                    for met in self.metrics_values.keys():
-                        if met == "loss":
-                            f.write('- Loss: {:.3f}\n'.format(self.metrics_values[met]))
-                        elif met == "accuracy_f{}".format(value):
-                            f.write('- Accuracy f{}: {:.3f}\n'.format(value, self.metrics_values[met]))
-                        elif met == "balanced_accuracy_f{}".format(value):
-                            f.write('- Balanced accuracy f{}: {:.3f}\n'.format(value, self.metrics_values[met]))
-                        elif met == "topk_accuracy_f{}".format(value):
-                            f.write('- Top {} accuracy f{}: {:.3f}\n'.format(self.topk, value, self.metrics_values[met]))
-                        elif met == "auc_f{}".format(value):
-                            f.write('- AUC f{}: {:.3f}\n'.format(value, self.metrics_values[met]))
-                        elif met == "conf_matrix_f{}".format(value):
-                            f.write('- Confusion Matrix f{}: \n{}\n'.format(value, self.metrics_values[met]))
-                        elif met == "precision_recall_report_f{}".format(value):
-                            f.write('- Precision and Recall report f{}: \n{}\n'.format(value, self.metrics_values[met]))
-                        elif met == "auc_and_roc_curve_f{}".format(value):
-                            resp = self.metrics_values[met]
-                            f.write('- AUC f{}:\n {}\n'.format(value, resp[0]))
-
-                    f.close()
 
 
     def save_scores (self, folder_path=None, pred_name="predictions.csv"):
