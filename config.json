@@ -1,5 +1,7 @@
 {
-    "dataset_folder_path": "/home/epmagesk/pipeline-IA-TCC/data",
+    "output_folder_path": "/home/epmagesk/pipeline-IA-TCC/data",
     "dataset_csv_path": "/datasets/PAD-UFES-26/anonymous-metadata.csv",
-    "dataset_images_path": "/datasets/PAD-UFES-26/anonymous-images"
+    "dataset_images_path": "/datasets/PAD-UFES-26/anonymous-images",
+    "mskcc_csv_path": "/home/epmagesk/datasets/MSKCC/metadata.csv",
+    "mskcc_folder_path": "/home/epmagesk/datasets/MSKCC"
 }

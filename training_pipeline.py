@@ -36,6 +36,7 @@ with open("./config.json") as json_file:
 
 _DATASET_BASE_PATH = _LOCAL_CONFIG["dataset_folder_path"]
 _CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_{IMG_TYPE}_folders_raw.csv")
+_CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_{IMG_TYPE}_folders_raw_test.csv")
 _JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_{IMG_TYPE}.json")
 _IMGS_FOLDER_TRAIN = os.path.join(_LOCAL_CONFIG['dataset_images_path'])
 
@@ -204,4 +205,40 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     test_model (model, val_data_loader, checkpoint_path=_checkpoint_best, loss_fn=loss_fn, save_pred=True,
                 partition_name='eval', metrics_to_comp='all', class_names=_labels_name, metrics_options=_metric_options,
                 apply_softmax=True, verbose=False)
+    ####################################################################################################################
+
+    # Try to perform the test partition if it exists
+    try:
+        csv_test = pd.read_csv(_CSV_PATH_TEST)
+        print("- Loading test data...")
+    except:
+        print("- There is no test partition. It's all done!")
+        return   
+        
+    test_imgs_id = csv_test[IMG_COLUMN].values
+    test_imgs_path = ["{}/{}".format(_IMGS_FOLDER_TRAIN, img_id) for img_id in test_imgs_id]
+    test_labels = csv_test[TARGET_NUMBER_COLUMN].values
+    test_meta_data = list()
+    if _use_meta_data:
+        for img_id in test_imgs_id:
+            doc_vec = sentence_model.encode(meta_json[img_id], show_progress_bar=False)           
+            test_meta_data.append(doc_vec)     
+        test_meta_data = np.asarray(test_meta_data)   
+        print(f"-- Using {doc_vec.shape} meta-data features")
+    else:
+        print("-- No metadata")
+        test_meta_data = None
+
+    _metric_options = {
+        'save_all_path': os.path.join(_save_folder, "test_pred"),
+        'pred_name_scores': 'predictions.csv',
+        'normalize_conf_matrix': True}
+    test_data_loader = get_data_loader(test_imgs_path, test_labels, test_meta_data, transform=ImgEvalTransform(),
+                                       batch_size=_batch_size, shuf=False, num_workers=16, pin_memory=True)
+    print("-" * 50)
+
+    # Testing the test partition
+    print("\n- Evaluating the validation partition...")
+    test_model(model, test_data_loader, checkpoint_path=None, metrics_to_comp="all",
+               class_names=_labels_name, metrics_options=_metric_options, save_pred=True, verbose=False)
     ####################################################################################################################
