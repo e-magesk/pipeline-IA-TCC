@@ -34,11 +34,15 @@ IMG_TYPE = "clinical" # clinical, dermatoscope or both
 with open("./config.json") as json_file:
     _LOCAL_CONFIG = json.load(json_file)
 
-_DATASET_BASE_PATH = _LOCAL_CONFIG["dataset_folder_path"]
+_DATASET_BASE_PATH = _LOCAL_CONFIG["output_folder_path"]
 _CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_{IMG_TYPE}_folders_raw.csv")
-_CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_{IMG_TYPE}_folders_raw_test.csv")
 _JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_{IMG_TYPE}.json")
-_IMGS_FOLDER_TRAIN = os.path.join(_LOCAL_CONFIG['dataset_images_path'])
+
+_CSV_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_dermatoscope_folders_raw.csv")
+_JSON_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_dermatoscope.json")
+if IMG_TYPE == "dermatoscope":
+    _CSV_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_clinical_folders_raw.csv")
+    _JSON_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_clinical.json")
 
 # Avoiding the tokenizers warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -125,7 +129,7 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
 
     # Loading validation data
     val_imgs_id = val_csv_folder[IMG_COLUMN].values
-    val_imgs_path = ["{}/{}".format(_IMGS_FOLDER_TRAIN, img_id) for img_id in val_imgs_id]
+    val_imgs_path = ["{}".format(img_id) for img_id in val_imgs_id]
     val_labels = val_csv_folder[TARGET_NUMBER_COLUMN].values
     val_meta_data = list()
 
@@ -145,7 +149,7 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
   
     print("- Loading training data...")
     train_imgs_id = train_csv_folder[IMG_COLUMN].values
-    train_imgs_path = ["{}/{}".format(_IMGS_FOLDER_TRAIN, img_id) for img_id in train_imgs_id]
+    train_imgs_path = ["{}".format(img_id) for img_id in train_imgs_id]
     train_labels = train_csv_folder[TARGET_NUMBER_COLUMN].values
     train_meta_data = list()
     if _use_meta_data:
@@ -216,9 +220,12 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
         return   
         
     test_imgs_id = csv_test[IMG_COLUMN].values
-    test_imgs_path = ["{}/{}".format(_IMGS_FOLDER_TRAIN, img_id) for img_id in test_imgs_id]
+    test_imgs_path = ["{}".format(img_id) for img_id in test_imgs_id]
     test_labels = csv_test[TARGET_NUMBER_COLUMN].values
     test_meta_data = list()
+
+    with open(_JSON_PATH_TEST) as json_file:
+        meta_json = json.load(json_file)
     if _use_meta_data:
         for img_id in test_imgs_id:
             doc_vec = sentence_model.encode(meta_json[img_id], show_progress_bar=False)           
