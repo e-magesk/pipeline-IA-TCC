@@ -1,5 +1,6 @@
 from PIL import Image
 from torch.utils import data
+from torch import DoubleTensor
 import torchvision.transforms as transforms
 
 
@@ -73,7 +74,7 @@ class MyDataset (data.Dataset):
 
 
 def get_data_loader (imgs_path, labels, meta_data=None, transform=None, batch_size=30, shuf=True, num_workers=4,
-                     pin_memory=True):
+                     pin_memory=True, batch_weights=None):
     """
     This function gets a list og images path, their labels and meta-data (if applicable) and returns a DataLoader
     for these files. You also can set some transformations using torchvision.transforms in order to perform data
@@ -101,7 +102,19 @@ def get_data_loader (imgs_path, labels, meta_data=None, transform=None, batch_si
     """
 
     dt = MyDataset(imgs_path, labels, meta_data, transform)
+
+    sampler = None
+    if batch_weights is not None:
+        shuf = False
+        sample_weights = [batch_weights[t] for t in labels]
+        sample_weights = DoubleTensor(sample_weights)
+        sampler = data.WeightedRandomSampler(
+            weights=sample_weights, 
+            num_samples=len(sample_weights), 
+            replacement=True
+        )
+
     dl = data.DataLoader (dataset=dt, batch_size=batch_size, shuffle=shuf, num_workers=num_workers,
-                          pin_memory=pin_memory)
+                          pin_memory=pin_memory, sampler=sampler)
     return dl
 

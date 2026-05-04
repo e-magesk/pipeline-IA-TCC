@@ -201,13 +201,6 @@ def set_class_model (model_name, num_class, neurons_reducer_block=0, comb_method
         model = MyResnet(models.resnet101(weights=pre_torch), num_class, neurons_reducer_block, freeze_conv,
                          comb_method=comb_method, comb_config=comb_config)
 
-    elif model_name == 'densenet-121':
-        model = MyDensenet(models.densenet121(weights=pre_torch), num_class, neurons_reducer_block, freeze_conv,
-                         comb_method=comb_method, comb_config=comb_config)
-
-    elif model_name == 'densenet-169':
-        model = MyDensenet(models.densenet169(weights=pre_torch), num_class, neurons_reducer_block, freeze_conv,
-                         comb_method=comb_method, comb_config=comb_config, n_feat_conv=1664)
     elif model_name == 'vgg-13':
         model = MyVGGNet(models.vgg13_bn(weights=pre_torch), num_class, neurons_reducer_block, freeze_conv,
                          comb_method=comb_method, comb_config=comb_config)

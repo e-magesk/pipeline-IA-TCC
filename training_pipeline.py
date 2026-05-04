@@ -29,7 +29,7 @@ from sentence_transformers import SentenceTransformer
 
 # Getting the local configurations
 CLASS_TYPE = "diag" # triage or diag
-IMG_TYPE = "clinical" # clinical, dermatoscope or both
+IMG_TYPE = "dermatoscope" # clinical, dermatoscope or both
 
 with open("./config.json") as json_file:
     _LOCAL_CONFIG = json.load(json_file)
@@ -50,7 +50,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # Avoiding huggingface warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hub")
 
-TARGET_COLUMN = "histoMacroCID"
+TARGET_COLUMN = "clinicalMacroCID"
 TARGET_NUMBER_COLUMN = "diagnostic-number"
 IMG_COLUMN = "img-id"
 
@@ -68,6 +68,7 @@ def cnfg():
     # Models configurations
     _use_meta_data = True
     _neurons_reducer_block = 0
+    _freeze_conv=False
     _comb_method = "metablock" # metablock
     _comb_config = [64, 768] # number of metadata
     _batch_size = 30
@@ -98,7 +99,7 @@ def cnfg():
 @ex.automain
 def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _batch_size, _epochs, 
           _early_stop, _weights, _model_name, _pretrained, _optmizer, _save_folder, _best_metric, _llm_type,
-          _neurons_reducer_block, _comb_method, _comb_config, _use_meta_data, _metric_early_stop):
+          _neurons_reducer_block, _freeze_conv, _comb_method, _comb_config, _use_meta_data, _metric_early_stop):
     
 
     _metric_options = {
@@ -145,7 +146,24 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     val_data_loader = get_data_loader (val_imgs_path, val_labels, val_meta_data, transform=ImgEvalTransform(),
                                        batch_size=_batch_size, shuf=True, num_workers=16, pin_memory=True)
     print("-- Validation partition loaded with {} images".format(len(val_data_loader)*_batch_size))
-  
+
+
+    ####################################################################################################################
+
+    ser_lab_freq = train_csv_folder.groupby([TARGET_COLUMN])[IMG_COLUMN].count()
+    _labels_name = ser_lab_freq.index.values
+    _freq = ser_lab_freq.values
+    print(ser_lab_freq)
+
+    if _weights == 'frequency':
+        _weights = (_freq.sum() / _freq).round(3)
+
+    beta = 0.9
+    effective_num = 1.0 - np.power(beta, _freq)
+    _weights_ens = (1.0 - beta) / effective_num
+
+    ####################################################################################################################
+
   
     print("- Loading training data...")
     train_imgs_id = train_csv_folder[IMG_COLUMN].values
@@ -168,27 +186,22 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     print("-"*50)
 
     ####################################################################################################################
-
-    ser_lab_freq = train_csv_folder.groupby([TARGET_COLUMN])[IMG_COLUMN].count()
-    _labels_name = ser_lab_freq.index.values
-    _freq = ser_lab_freq.values
-    print(ser_lab_freq)
-
-    ####################################################################################################################
     print("- Loading", _model_name)
 
-    model = set_class_model(_model_name, len(_labels_name), neurons_reducer_block=_neurons_reducer_block,
+    model = set_class_model(_model_name, len(_labels_name), neurons_reducer_block=_neurons_reducer_block, freeze_conv=_freeze_conv,
                       comb_method=_comb_method, comb_config=_comb_config, pretrained=_pretrained)
     ####################################################################################################################
-    if _weights == 'frequency':
-        _weights = (_freq.sum() / _freq).round(3)
 
     loss_fn = nn.CrossEntropyLoss(weight=torch.Tensor(_weights).cuda())
+    # loss_fn = nn.CrossEntropyLoss(weight=torch.Tensor(_weights_ens).cuda())
+
+    # loss_fn = nn.CrossEntropyLoss()
+
 
     if _optmizer == "adam":
         optimizer = optim.Adam(model.parameters(), lr=_lr_init)
     elif _optmizer == "sgd":        
-        optimizer = optim.SGD(model.parameters(), lr=_lr_init, momentum=0.9, weight_decay=0.001)
+        optimizer = optim.SGD(model.parameters(), lr=_lr_init, momentum=0.9, weight_decay=0.05)
     else:
         raise ValueError("Invalid optimizer name")
     

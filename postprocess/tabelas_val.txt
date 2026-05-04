@@ -1,0 +1,50 @@
+% --- TABELA: TRIAGE ---
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resultados de avaliação do classificador de Triage.}
+    \label{tab:resultados_triage}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{lcccccccc}
+        \toprule
+        \multirow{2}{*}{\textbf{Backbone}} & \multicolumn{4}{c}{\textbf{Clinical}} & \multicolumn{4}{c}{\textbf{Dermatoscope}} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-9}
+         & \textbf{BACC} & \textbf{ACC} & \textbf{AUC} & \textbf{F1_MACRO} & \textbf{BACC} & \textbf{ACC} & \textbf{AUC} & \textbf{F1_MACRO} \\
+        \midrule
+        \textbf{Caformer-s18} & $0.71 \pm 0.01$ & $0.82 \pm 0.02$ & $0.94 \pm 0.00$ & $0.69 \pm 0.02$ & $0.69 \pm 0.02$ & $0.70 \pm 0.05$ & $0.90 \pm 0.01$ & $0.60 \pm 0.04$ \\
+        \textbf{Davit-tiny} & $0.72 \pm 0.01$ & $0.81 \pm 0.02$ & $0.94 \pm 0.00$ & $0.69 \pm 0.02$ & $0.70 \pm 0.01$ & $0.71 \pm 0.04$ & $0.90 \pm 0.01$ & $0.59 \pm 0.03$ \\
+        \textbf{EfficientNet-b4} & $0.69 \pm 0.01$ & $0.80 \pm 0.01$ & $0.93 \pm 0.00$ & $0.67 \pm 0.02$ & $0.68 \pm 0.01$ & $0.70 \pm 0.02$ & $0.89 \pm 0.01$ & $0.59 \pm 0.01$ \\
+        \textbf{Maxvit-tiny} & $0.70 \pm 0.02$ & $0.81 \pm 0.02$ & $0.93 \pm 0.00$ & $0.67 \pm 0.02$ & $0.68 \pm 0.01$ & $0.70 \pm 0.02$ & $0.89 \pm 0.01$ & $0.59 \pm 0.01$ \\
+        \textbf{MobileNet-v2} & $0.68 \pm 0.01$ & $0.80 \pm 0.01$ & $0.93 \pm 0.00$ & $0.66 \pm 0.02$ & $0.68 \pm 0.01$ & $0.70 \pm 0.04$ & $0.89 \pm 0.01$ & $0.58 \pm 0.03$ \\
+        \textbf{Mvit2-small} & $0.72 \pm 0.02$ & $0.81 \pm 0.01$ & $0.94 \pm 0.00$ & $0.69 \pm 0.02$ & $0.68 \pm 0.03$ & $0.66 \pm 0.06$ & $0.89 \pm 0.01$ & $0.56 \pm 0.04$ \\
+        \textbf{ResNet-50} & $0.70 \pm 0.03$ & $0.78 \pm 0.01$ & $0.93 \pm 0.00$ & $0.65 \pm 0.02$ & $0.70 \pm 0.02$ & $0.68 \pm 0.04$ & $0.89 \pm 0.01$ & $0.58 \pm 0.03$ \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+
+% --- TABELA: DIAG ---
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resultados de avaliação do classificador de Diag.}
+    \label{tab:resultados_diag}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{lcccc}
+        \toprule
+        \multirow{2}{*}{\textbf{Backbone}} & \multicolumn{4}{c}{\textbf{Clinical}} & \multicolumn{4}{c}{\textbf{Dermatoscope}} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-9}
+         & \textbf{BACC} & \textbf{ACC} & \textbf{AUC} & \textbf{F1_MACRO} \\
+        \midrule
+        \textbf{Caformer-s18} & $0.55 \pm 0.03$ & $0.63 \pm 0.04$ & $0.87 \pm 0.02$ & $0.51 \pm 0.04$ \\
+        \textbf{Davit-tiny} & $0.56 \pm 0.02$ & $0.59 \pm 0.01$ & $0.86 \pm 0.01$ & $0.47 \pm 0.02$ \\
+        \textbf{EfficientNet-b4} & $0.54 \pm 0.02$ & $0.59 \pm 0.02$ & $0.85 \pm 0.01$ & $0.46 \pm 0.03$ \\
+        \textbf{Maxvit-tiny} & $0.55 \pm 0.01$ & $0.62 \pm 0.01$ & $0.86 \pm 0.01$ & $0.50 \pm 0.02$ \\
+        \textbf{MobileNet-v2} & $0.56 \pm 0.05$ & $0.58 \pm 0.04$ & $0.85 \pm 0.02$ & $0.46 \pm 0.06$ \\
+        \textbf{Mvit2-small} & $0.58 \pm 0.01$ & $0.64 \pm 0.03$ & $0.89 \pm 0.01$ & $0.55 \pm 0.02$ \\
+        \textbf{ResNet-50} & $0.59 \pm 0.02$ & $0.60 \pm 0.02$ & $0.87 \pm 0.01$ & $0.48 \pm 0.01$ \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}

@@ -4,6 +4,46 @@ import numpy as np
 import torchvision
 import cv2
 
+# class ImgTrainTransform:
+#     def __init__(self, size=(224, 224), normalization=([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])):
+#         self.normalization = normalization
+        
+#         self.aug = A.Compose([
+#             # O parâmetro 'size' aceita uma tupla (altura, largura)
+#             A.RandomResizedCrop(size=size, scale=(0.7, 1.0), p=1.0),
+#             A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=180, border_mode=cv2.BORDER_REFLECT, p=0.7),
+#             A.HorizontalFlip(p=0.5),
+#             A.VerticalFlip(p=0.5),
+#             A.RandomRotate90(p=0.5),
+
+#             A.OneOf([
+#                 A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=1),
+#                 A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=1),
+#                 A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1, p=1),
+#             ], p=0.5),
+
+#             A.OneOf([
+#                 A.GaussianBlur(sigma_limit=(0, 3.0), p=1),
+#                 A.GaussNoise(var_limit=(10.0, 50.0), p=1),
+#                 A.ISONoise(p=1),
+#             ], p=0.3),
+
+#             A.CoarseDropout(
+#                 max_holes=8, 
+#                 max_height=int(size[0] * 0.1), 
+#                 max_width=int(size[1] * 0.1), 
+#                 p=0.3
+#             ),
+
+#             A.Normalize(mean=self.normalization[0], std=self.normalization[1]),
+#             ToTensorV2(),
+#         ])
+
+#     def __call__(self, img):
+#         # Converte para array se necessário e aplica
+#         img_array = np.array(img)
+#         return self.aug(image=img_array)['image']
+
 class ImgTrainTransform:
 
     def __init__(self, size=(224,224), normalization=([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])):
@@ -16,7 +56,7 @@ class ImgTrainTransform:
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.2),
             A.Affine(rotate=(-120, 120), border_mode=cv2.BORDER_REFLECT, p=0.25),
-            A.GaussianBlur(sigma_limit=(0, 3.0) , p=0.25), #VERIFICADA
+            A.GaussianBlur(sigma_limit=(0, 3.0) , p=0.25),
 
             # noise
             A.OneOf([
