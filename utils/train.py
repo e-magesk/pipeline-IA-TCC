@@ -81,6 +81,7 @@ def _train_epoch (model, optimizer, loss_fn, data_loader, c_epoch, t_epoch, devi
                 imgs_batch, labels_batch = data
                 metadata_batch = []
             except:
+                print(f'Quebrou na epoch {c_epoch}')
                 break
 
             if len(metadata_batch):
@@ -126,7 +127,7 @@ def _train_epoch (model, optimizer, loss_fn, data_loader, c_epoch, t_epoch, devi
 
 
 def fit_model (model, train_data_loader, val_data_loader, optimizer=None, loss_fn=None, epochs=10,
-               epochs_early_stop=None, save_folder=None, initial_model=None, best_metric="loss", device=None,
+               epochs_early_stop=None, save_folder=None, checkpoint_folder=None, initial_model=None, best_metric="loss", device=None,
                topk=2, schedule_lr=None, config_bot=None, model_name="CNN", resume_train=False, history_plot=True,
                val_metrics=('balanced_accuracy', 'auc'), metric_early_stop=None):
     """
@@ -356,7 +357,7 @@ def fit_model (model, train_data_loader, val_data_loader, optimizer=None, loss_f
 
         # Check if it's the best model in order to save it
         if save_folder is not None:
-            save_model(model, save_folder, epoch, optimizer, loss_fn, best_flag, multi_gpu=m_gpu > 1)
+            save_model(model, save_folder, checkpoint_folder, epoch, optimizer, loss_fn, best_flag, multi_gpu=m_gpu > 1)
         best_flag = False
 
         # Updating the logger

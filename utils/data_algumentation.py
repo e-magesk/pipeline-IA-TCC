@@ -64,6 +64,18 @@ class ImgTrainTransform:
                 A.CoarseDropout(num_holes_range=(int(0.00125*size[0]*size[1]), int(0.00125*size[0]*size[1])), hole_height_range=(4, 4), hole_width_range=(4, 4), p=1), # PRECISA VERIFICAR
             ], p=0.1),
 
+            # A.Erasing(
+            #     p=0.25, 
+            #     scale=(0.02, 0.33), 
+            #     ratio=(0.3, 3.3), 
+            #     fill=0
+            # ),
+            # A.Erasing(
+            #     p=0.25, 
+            #     scale=(0.02, 0.33), 
+            #     ratio=(0.3, 3.3), 
+            #     fill=1
+            # ),
             A.OneOf([
                 A.OneOrOther(
                     first=A.MultiplicativeNoise(multiplier=(0.9, 1.1), per_channel=False, elementwise=False, p=1),

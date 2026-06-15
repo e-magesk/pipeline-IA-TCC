@@ -1,7 +1,11 @@
 {
     "output_folder_path": "/home/epmagesk/pipeline-IA-TCC/data",
     "dataset_csv_path": "/datasets/PAD-UFES-26/anonymous-metadata.csv",
-    "dataset_images_path": "/datasets/PAD-UFES-26/anonymous-images",
+    "dataset_images_path": "/datasets/PAD-UFES-26/anonymous-images-derm-cropped",
     "mskcc_csv_path": "/home/epmagesk/datasets/MSKCC/metadata.csv",
-    "mskcc_folder_path": "/home/epmagesk/datasets/MSKCC"
+    "mskcc_folder_path": "/home/epmagesk/datasets/MSKCC",
+    "einstein_csv_path": "/home/epmagesk/datasets/einstein/einstein_cropped.csv",
+    "einstein_folder_path": "/home/epmagesk/datasets/einstein",
+    "derm7pt_folder_path" : "/home/epmagesk/datasets/7-Point-Criteria",
+    "milk10k_folder_path" : "/home/epmagesk/datasets/MILK10k"
 }

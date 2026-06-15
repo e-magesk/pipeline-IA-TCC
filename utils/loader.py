@@ -52,7 +52,10 @@ class MyDataset (data.Dataset):
         :param item (int): an index in the interval [0, ..., len(img_paths)-1]
         :return (tuple): a tuple containing the image, its label and meta-data (if applicable)
         """
-        image = Image.open(self.imgs_path[item]).convert("RGB")
+        try:
+            image = Image.open(self.imgs_path[item]).convert("RGB")
+        except:
+            print(self.imgs_path[item])
         
         # Applying the transformations
         image = self.transform(image)
@@ -74,7 +77,7 @@ class MyDataset (data.Dataset):
 
 
 def get_data_loader (imgs_path, labels, meta_data=None, transform=None, batch_size=30, shuf=True, num_workers=4,
-                     pin_memory=True, batch_weights=None):
+                     pin_memory=True, batch_weights=None, drop_last=True):
     """
     This function gets a list og images path, their labels and meta-data (if applicable) and returns a DataLoader
     for these files. You also can set some transformations using torchvision.transforms in order to perform data
@@ -115,6 +118,6 @@ def get_data_loader (imgs_path, labels, meta_data=None, transform=None, batch_si
         )
 
     dl = data.DataLoader (dataset=dt, batch_size=batch_size, shuffle=shuf, num_workers=num_workers,
-                          pin_memory=pin_memory, sampler=sampler)
+                          pin_memory=pin_memory, sampler=sampler, drop_last=drop_last)
     return dl
 

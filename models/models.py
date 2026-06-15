@@ -17,7 +17,14 @@ _MODELS_CONFIG = {
     'vgg-13': 'VGG13_BN_Weights.DEFAULT',
     'vgg-16': 'VGG16_Weights.DEFAULT',
     'vgg-19': 'VGG19_BN_Weights.DEFAULT',
-    'mobilenet': 'MobileNet_V2_Weights.DEFAULT',    
+    'mobilenet_v2': { 
+        'weights': 'MobileNet_V2_Weights.DEFAULT', 
+        'n_feat_conv': 1280, 
+    },
+    'mobilenet_v3_small': { 
+        'weights': 'MobileNet_V3_Small_Weights.DEFAULT', 
+        'n_feat_conv': 1024, 
+    },
     'efficientnet-b4': True,
     'efficientnet-b3': True,
     'coat_small': {
@@ -118,7 +125,11 @@ _MODELS_CONFIG = {
     'mobilenet-v4': {
         'weights': 'mobilenetv4_hybrid_medium.e500_r224_in1k',
         'n_feat_conv': 1280,
-    }
+    },
+    "mobilenet-v3": {
+            "weights": "mobilenetv3_small_100.lamb_in1k",
+            "n_feat_conv": 1024,
+    },
 }
 
 CONFIG_METABLOCK_BY_MODEL = {
@@ -148,10 +159,12 @@ CONFIG_METABLOCK_BY_MODEL = {
     'maxvit_tiny': 16,
     'volo_d1_224': 12,
     'resnet-50': 64,
-    'mobilenet': 40,
+    'mobilenet_v2': 40,
+    'mobilenet_v3_small': 32,
     'efficientnet-b4': 56,
     'efficientnet-b0': 40,
     'efficientnet-b5': 64,
+    'mobilenet-v3' : 32,
 }
 
 _NORM_AND_SIZE = [[0.485, 0.456, 0.406], [0.229, 0.224, 0.225], [224, 224]]
@@ -212,10 +225,14 @@ def set_class_model (model_name, num_class, neurons_reducer_block=0, comb_method
     elif model_name == 'vgg-19':
         model = MyVGGNet(models.vgg19_bn(weights=pre_torch), num_class, neurons_reducer_block, freeze_conv,
                          comb_method=comb_method, comb_config=comb_config)
-
-    elif model_name == 'mobilenet':
+        
+    elif model_name == 'mobilenet_v2':
         model = MyMobilenet(models.mobilenet_v2(weights=pre_torch), num_class, neurons_reducer_block, freeze_conv,
                          comb_method=comb_method, comb_config=comb_config)
+
+    elif model_name == 'mobilenet_v3_small':
+        model = MyMobilenet(models.mobilenet_v3_small(weights=pre_torch), num_class, neurons_reducer_block, freeze_conv,
+                         comb_method=comb_method, comb_config=comb_config, n_feat_conv=pre_torch['n_feat_conv'])
 
     elif model_name in ['efficientnet-b4', 'efficientnet-b3']:
         if pretrained:

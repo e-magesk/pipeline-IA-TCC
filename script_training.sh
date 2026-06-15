@@ -1,13 +1,13 @@
+python3 training_pipeline.py with _folder=1 _model_name=mobilenet-v3 _comb_config=[32,768]
 python3 training_pipeline.py with _folder=1
 python3 training_pipeline.py with _folder=2
 python3 training_pipeline.py with _folder=3
 python3 training_pipeline.py with _folder=4
 python3 training_pipeline.py with _folder=5
-python3 training_pipeline.py with _folder=1 _model_name=mobilenet _comb_config=[40,768]
-python3 training_pipeline.py with _folder=2 _model_name=mobilenet _comb_config=[40,768]
-python3 training_pipeline.py with _folder=3 _model_name=mobilenet _comb_config=[40,768]
-python3 training_pipeline.py with _folder=4 _model_name=mobilenet _comb_config=[40,768]
-python3 training_pipeline.py with _folder=5 _model_name=mobilenet _comb_config=[40,768]
+python3 training_pipeline.py with _folder=2 _model_name=mobilenet-v3 _comb_config=[32,768]
+python3 training_pipeline.py with _folder=3 _model_name=mobilenet-v3 _comb_config=[32,768]
+python3 training_pipeline.py with _folder=4 _model_name=mobilenet-v3 _comb_config=[32,768]
+python3 training_pipeline.py with _folder=5 _model_name=mobilenet-v3 _comb_config=[32,768]
 python3 training_pipeline.py with _folder=1 _model_name=davit_tiny _comb_config=[24,768]
 python3 training_pipeline.py with _folder=2 _model_name=davit_tiny _comb_config=[24,768]
 python3 training_pipeline.py with _folder=3 _model_name=davit_tiny _comb_config=[24,768]

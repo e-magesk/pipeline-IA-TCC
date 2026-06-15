@@ -28,8 +28,8 @@ from sentence_transformers import SentenceTransformer
 ######################################################################################
 
 # Getting the local configurations
-CLASS_TYPE = "triage" # triage or diag
-IMG_TYPE = "clinical" # clinical, dermatoscope or both
+CLASS_TYPE = "diag" # triage or diag
+IMG_TYPE = "dermatoscope" # clinical, dermatoscope or both
 
 with open("./config.json") as json_file:
     _LOCAL_CONFIG = json.load(json_file)
@@ -40,7 +40,7 @@ _JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_
 
 _CSV_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_dermatoscope_folders_raw.csv")
 _JSON_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_dermatoscope.json")
-if IMG_TYPE == "dermatoscope":
+if IMG_TYPE == "clinical":
     _CSV_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_clinical_folders_raw.csv")
     _JSON_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_clinical.json")
 if IMG_TYPE == "both":
@@ -89,7 +89,7 @@ def cnfg():
     _sched_factor = 0.1
     _sched_min_lr = 1e-6
     _sched_patience = 10
-    _early_stop = 15
+    _early_stop = 10
     _metric_early_stop = None
     _weights = "frequency"       
     
@@ -104,12 +104,13 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
           _early_stop, _weights, _model_name, _pretrained, _optmizer, _save_folder, _best_metric, _llm_type,
           _neurons_reducer_block, _freeze_conv, _comb_method, _comb_config, _use_meta_data, _metric_early_stop):
     
+    ######################################### ETAPA 1 #################################################
 
     _metric_options = {
-        'save_all_path': os.path.join(_save_folder, "best_metrics"),
-        'pred_name_scores': 'predictions_best_test.csv',
+        'save_all_path': os.path.join(_save_folder, "best_metrics_step2"),
+        'pred_name_scores': 'predictions_best_test_step2.csv',
         'normalize_conf_matrix': True}
-    _checkpoint_best = os.path.join(_save_folder, 'best-checkpoint/best-checkpoint.pth')
+    _checkpoint_best = os.path.join(_save_folder, 'best-checkpoint_step2/best-checkpoint.pth')
 
     # Loading the csv file
     csv_all_folders = pd.read_csv(_CSV_PATH_TRAIN)
@@ -128,8 +129,8 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
 
     print("-" * 50)
     print("- Loading validation data...")
-    val_csv_folder = csv_all_folders[ (csv_all_folders['folder'] == _folder) ]
-    train_csv_folder = csv_all_folders[ (csv_all_folders['folder'] != _folder) ]
+    val_csv_folder = csv_all_folders[ (csv_all_folders['folder'] == _folder)  & (csv_all_folders['category'] == 'train')]
+    train_csv_folder = csv_all_folders[ (csv_all_folders['folder'] != _folder) & (csv_all_folders['category'] == 'train') ]
 
     # Loading validation data
     val_imgs_id = val_csv_folder[IMG_COLUMN].values
@@ -215,9 +216,185 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     print("- Starting the training phase...")
     print("-" * 50)
     fit_model (model, train_data_loader, val_data_loader, optimizer=optimizer, loss_fn=loss_fn, epochs=_epochs,
+               epochs_early_stop=_early_stop, save_folder=_save_folder, checkpoint_folder="best-checkpoint_step2", initial_model=None, metric_early_stop=_metric_early_stop,
+               device=None, schedule_lr=scheduler_lr, config_bot=None, model_name="CNN", resume_train=False,
+               history_plot=True, val_metrics=["balanced_accuracy"], best_metric=_best_metric)
+    ####################################################################################################################
+
+    # Testing the validation partition
+    print("- Evaluating the validation partition...")
+    test_model (model, val_data_loader, checkpoint_path=_checkpoint_best, loss_fn=loss_fn, save_pred=True,
+                partition_name='eval', metrics_to_comp='all', class_names=_labels_name, metrics_options=_metric_options,
+                apply_softmax=True, verbose=False)
+    
+    ####################################################################################################################
+
+    # Try to perform the test partition if it exists
+    try:
+        csv_test = pd.read_csv(_CSV_PATH_TEST)
+        csv_test = csv_test[csv_test['category'] == 'train']
+        print("- Loading test data...")
+    except:
+        print("- There is no test partition. It's all done!")
+        return   
+        
+    test_imgs_id = csv_test[IMG_COLUMN].values
+    test_imgs_path = ["{}".format(img_id) for img_id in test_imgs_id]
+    test_labels = csv_test[TARGET_NUMBER_COLUMN].values
+    test_meta_data = list()
+
+    with open(_JSON_PATH_TEST) as json_file:
+        meta_json = json.load(json_file)
+    if _use_meta_data:
+        for img_id in test_imgs_id:
+            doc_vec = sentence_model.encode(meta_json[img_id], show_progress_bar=False)           
+            test_meta_data.append(doc_vec)     
+        test_meta_data = np.asarray(test_meta_data)   
+        print(f"-- Using {doc_vec.shape} meta-data features")
+    else:
+        print("-- No metadata")
+        test_meta_data = None
+
+    _metric_options = {
+        'save_all_path': os.path.join(_save_folder, "test_pred_step2"),
+        'pred_name_scores': 'predictions_step2.csv',
+        'normalize_conf_matrix': True}
+    test_data_loader = get_data_loader(test_imgs_path, test_labels, test_meta_data, transform=ImgEvalTransform(),
+                                       batch_size=_batch_size, shuf=False, num_workers=16, pin_memory=True, drop_last=False)
+    print("-" * 50)
+
+    # Testing the test partition
+    print("\n- Evaluating the validation partition...")
+    test_model(model, test_data_loader, checkpoint_path=None, metrics_to_comp="all",
+               class_names=_labels_name, metrics_options=_metric_options, save_pred=True, verbose=False)
+    ####################################################################################################################
+
+    #################################################### ETAPA 2 #######################################################
+
+    print(_save_folder)
+    _metric_options = {
+        'save_all_path': os.path.join(_save_folder, "best_metrics"),
+        'pred_name_scores': 'predictions_best_test.csv',
+        'normalize_conf_matrix': True}
+    _checkpoint_best = os.path.join(_save_folder, 'best-checkpoint/best-checkpoint.pth')
+    
+    meta_json = sentence_model = None
+    if _use_meta_data:
+        with open(_JSON_PATH_TRAIN) as json_file:
+            meta_json = json.load(json_file)
+
+        if _llm_type == "small":            
+            sentence_model = SentenceTransformer("sentence-transformers/paraphrase-albert-small-v2")
+        elif _llm_type == "large":
+            sentence_model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")        
+        else:
+            raise ValueError("Invalid LLM type")
+
+    print("-" * 50)
+    print("- Loading validation data...")
+    val_csv_folder = csv_all_folders[ (csv_all_folders['folder'] == _folder) & (csv_all_folders['category'] == 'train-test') ]
+    train_csv_folder = csv_all_folders[ (csv_all_folders['folder'] != _folder) & (csv_all_folders['category'] == 'train-test') ]
+
+    # Loading validation data
+    val_imgs_id = val_csv_folder[IMG_COLUMN].values
+    val_imgs_path = ["{}".format(img_id) for img_id in val_imgs_id]
+    val_labels = val_csv_folder[TARGET_NUMBER_COLUMN].values
+    val_meta_data = list()
+
+    if _use_meta_data:
+        for img_id in val_imgs_id:
+            doc_vec = sentence_model.encode(meta_json[img_id], show_progress_bar=False)            
+            val_meta_data.append(doc_vec)   
+        val_meta_data = np.asarray(val_meta_data)
+        print(f"-- Using {val_meta_data.shape} meta-data features")        
+    else:
+        print("-- No metadata")
+        val_meta_data = None
+    val_data_loader = get_data_loader (val_imgs_path, val_labels, val_meta_data, transform=ImgEvalTransform(),
+                                       batch_size=_batch_size, shuf=True, num_workers=16, pin_memory=True, drop_last=False)
+    print("-- Validation partition loaded with {} images".format(len(val_data_loader)*_batch_size))
+
+
+    ####################################################################################################################
+
+    ser_lab_freq = train_csv_folder.groupby([TARGET_COLUMN])[IMG_COLUMN].count()
+    _labels_name = ser_lab_freq.index.values
+    _freq = ser_lab_freq.values
+    print(ser_lab_freq)
+
+    _weights = (_freq.sum() / _freq).round(3)
+
+    beta = 0.9
+    effective_num = 1.0 - np.power(beta, _freq)
+    _weights_ens = (1.0 - beta) / effective_num
+
+    ####################################################################################################################
+
+  
+    print("- Loading training data...")
+    train_imgs_id = train_csv_folder[IMG_COLUMN].values
+    train_imgs_path = ["{}".format(img_id) for img_id in train_imgs_id]
+    train_labels = train_csv_folder[TARGET_NUMBER_COLUMN].values
+    train_meta_data = list()
+    if _use_meta_data:
+        for img_id in train_imgs_id:
+            doc_vec = sentence_model.encode(meta_json[img_id], show_progress_bar=False)           
+            train_meta_data.append(doc_vec)     
+        train_meta_data = np.asarray(train_meta_data)   
+        print(f"-- Using {doc_vec.shape} meta-data features")
+    else:
+        print("-- No metadata")
+        train_meta_data = None
+
+    train_data_loader = get_data_loader (train_imgs_path, train_labels, train_meta_data, transform=ImgTrainTransform(),
+                                       batch_size=_batch_size, shuf=True, num_workers=16, pin_memory=True)
+    print("-- Training partition loaded with {} images".format(len(train_data_loader)*_batch_size))
+    print("-"*50)
+
+    ####################################################################################################################
+    print("- Loading", _model_name)
+
+    # model = set_class_model(_model_name, len(_labels_name), neurons_reducer_block=_neurons_reducer_block, freeze_conv=_freeze_conv,
+    #                   comb_method=_comb_method, comb_config=_comb_config, pretrained=_pretrained)
+    ####################################################################################################################
+
+    loss_fn = nn.CrossEntropyLoss(weight=torch.Tensor(_weights).cuda())
+    # loss_fn = nn.CrossEntropyLoss(weight=torch.Tensor(_weights_ens).cuda())
+
+    # loss_fn = nn.CrossEntropyLoss()
+
+
+    if _optmizer == "adam":
+        optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=_lr_init)
+    elif _optmizer == "sgd":        
+        optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=_lr_init, momentum=0.9, weight_decay=0.05)
+    else:
+        raise ValueError("Invalid optimizer name")
+    
+    scheduler_lr = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=_sched_factor, min_lr=_sched_min_lr,
+                                                                    patience=_sched_patience)
+    ####################################################################################################################
+
+    model.freeze_base()
+
+    print("- Starting the training phase...(1)")
+    print("-" * 50)
+    fit_model (model, train_data_loader, val_data_loader, optimizer=optimizer, loss_fn=loss_fn, epochs=5,
                epochs_early_stop=_early_stop, save_folder=_save_folder, initial_model=None, metric_early_stop=_metric_early_stop,
                device=None, schedule_lr=scheduler_lr, config_bot=None, model_name="CNN", resume_train=False,
                history_plot=True, val_metrics=["balanced_accuracy"], best_metric=_best_metric)
+
+    ####################################################################################################################
+
+    model.unfreeze_base()
+
+    print("- Starting the training phase...(2)")
+    print("-" * 50)
+    fit_model (model, train_data_loader, val_data_loader, optimizer=optimizer, loss_fn=loss_fn, epochs=_epochs,
+               epochs_early_stop=_early_stop, save_folder=_save_folder, initial_model=None, metric_early_stop=_metric_early_stop,
+               device=None, schedule_lr=scheduler_lr, config_bot=None, model_name="CNN", resume_train=False,
+               history_plot=True, val_metrics=["balanced_accuracy"], best_metric=_best_metric)
+
     ####################################################################################################################
 
     # Testing the validation partition
@@ -230,6 +407,7 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     # Try to perform the test partition if it exists
     try:
         csv_test = pd.read_csv(_CSV_PATH_TEST)
+        csv_test = csv_test[csv_test['category'] == 'train-test']
         print("- Loading test data...")
     except:
         print("- There is no test partition. It's all done!")
@@ -257,7 +435,7 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
         'pred_name_scores': 'predictions.csv',
         'normalize_conf_matrix': True}
     test_data_loader = get_data_loader(test_imgs_path, test_labels, test_meta_data, transform=ImgEvalTransform(),
-                                       batch_size=_batch_size, shuf=False, num_workers=16, pin_memory=True)
+                                       batch_size=_batch_size, shuf=False, num_workers=16, pin_memory=True, drop_last=False)
     print("-" * 50)
 
     # Testing the test partition

@@ -14,7 +14,7 @@ import torch
 import os
 import torch.nn as nn
 
-def save_model (model, folder_path, epoch, opt_fn, loss_fn, is_best, multi_gpu=False, verbose=False):
+def save_model (model, folder_path, checkpoint_folder, epoch, opt_fn, loss_fn, is_best, multi_gpu=False, verbose=False):
     """
     This function saves the parameters of a model. It saves the last and best model (if it's the best).
 
@@ -26,8 +26,12 @@ def save_model (model, folder_path, epoch, opt_fn, loss_fn, is_best, multi_gpu=F
     is not the best one. Default is false.
     """
 
+    if checkpoint_folder is not None:
+        best_check_path = os.path.join(folder_path, checkpoint_folder)
+    else:
+        best_check_path = os.path.join(folder_path, 'best-checkpoint')
+
     last_check_path = os.path.join(folder_path, 'last-checkpoint')
-    best_check_path = os.path.join(folder_path, 'best-checkpoint')
 
     if not os.path.exists(last_check_path):
         if verbose:

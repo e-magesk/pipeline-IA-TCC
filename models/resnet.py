@@ -55,6 +55,36 @@ class MyResnet (nn.Module):
         else:
             self.classifier = nn.Linear(n_feat_conv + _n_meta_data, num_class)
 
+    def freeze_base(self):
+        """
+        Passo A: Congela a base de extração de características (timm).
+        Apenas o classificador (e o metablock, se existir) será treinado.
+        """
+        for param in self.features.parameters():
+            param.requires_grad = False
+
+    def unfreeze_base(self):
+        """
+        Passo B: Descongela a base inteira para o Fine-Tuning.
+        Toda a rede passa a ser treinável.
+        """
+        for param in self.features.parameters():
+            param.requires_grad = True
+
+    def unfreeze_deep_layers(self):
+        """
+        Passo B (Alternativo): Descongela APENAS o bloco mais profundo da rede (layer4).
+        Mantém as camadas iniciais protegidas.
+        """
+        # 1. Por segurança, primeiro congelamos tudo
+        for param in self.features.parameters():
+            param.requires_grad = False
+            
+        # 2. Procuramos pelo nome das camadas profundas e as descongelamos
+        for name, param in self.features.named_parameters():
+            # Na ResNet do timm, o último bloco chama-se 'layer4'
+            if "layer4" in name: 
+                param.requires_grad = True
 
     def forward(self, img, meta_data=None):
 
