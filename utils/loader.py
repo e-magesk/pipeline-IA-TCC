@@ -10,7 +10,7 @@ class MyDataset (data.Dataset):
     class and implement the following methods: __len__, __getitem__ and the constructor __init__
     """
 
-    def __init__(self, imgs_path, labels, meta_data=None, transform=None):
+    def __init__(self, imgs_path_clinical, imgs_path_dermatoscope, labels, meta_data=None, transform=None):
         """
         The constructor gets the images path and their respectively labels and meta-data (if applicable).
         In addition, you can specify some transform operation to be carry out on the images.
@@ -19,7 +19,8 @@ class MyDataset (data.Dataset):
         imgs_path[x]'s label must take place on labels[x].
 
         Parameters:
-        :param imgs_path (list): a list of string containing the image paths
+        :param imgs_path_clinical (list): a list of string containing the clinical image paths
+        :param imgs_path_dermatoscope (list): a list of string containing the dermatoscope image paths
         :param labels (list) a list of labels for each image
         :param meta_data (list): a list of meta-data regarding each image. If None, there is no information.
         Defaul is None.
@@ -27,7 +28,8 @@ class MyDataset (data.Dataset):
         """
 
         super().__init__()
-        self.imgs_path = imgs_path
+        self.imgs_path_clinical = imgs_path_clinical
+        self.imgs_path_dermatoscope = imgs_path_dermatoscope
         self.labels = labels
         self.meta_data = meta_data
 
@@ -41,7 +43,7 @@ class MyDataset (data.Dataset):
 
     def __len__(self):
         """ This method just returns the dataset size """
-        return len(self.imgs_path)
+        return len(self.imgs_path_clinical)
 
 
     def __getitem__(self, item):
@@ -53,14 +55,21 @@ class MyDataset (data.Dataset):
         :return (tuple): a tuple containing the image, its label and meta-data (if applicable)
         """
         try:
-            image = Image.open(self.imgs_path[item]).convert("RGB")
+            image_clinical = Image.open(self.imgs_path_clinical[item]).convert("RGB")
         except:
-            print(self.imgs_path[item])
+            raise RuntimeError(f"Erro fatal ao carregar a imagem clínica: {self.imgs_path_clinical[item]}. Erro original: {e}")
+
+        try:
+            image_dermatoscope = Image.open(self.imgs_path_dermatoscope[item]).convert("RGB")
+        except:
+            raise RuntimeError(f"Erro fatal ao carregar a imagem dermatoscópica: {self.imgs_path_dermatoscope[item]}. Erro original: {e}")
         
         # Applying the transformations
-        image = self.transform(image)
+        image_clinical = self.transform(image_clinical)
+        image_dermatoscope = self.transform(image_dermatoscope)
 
-        img_id = self.imgs_path[item].split('/')[-1].split('.')[0]
+        img_id_clinical = self.imgs_path_clinical[item].split('/')[-1].split('.')[0]
+        img_id_dermatoscope = self.imgs_path_dermatoscope[item].split('/')[-1].split('.')[0]
 
         if self.meta_data is None:
             meta_data = []
@@ -72,11 +81,11 @@ class MyDataset (data.Dataset):
         else:
             labels = self.labels[item]
 
-        return image, labels, meta_data, img_id
+        return image_clinical, image_dermatoscope, labels, meta_data, img_id_clinical, img_id_dermatoscope
 
 
 
-def get_data_loader (imgs_path, labels, meta_data=None, transform=None, batch_size=30, shuf=True, num_workers=4,
+def get_data_loader (imgs_path_clinical, imgs_path_dermatoscope, labels, meta_data=None, transform=None, batch_size=30, shuf=True, num_workers=4,
                      pin_memory=True, batch_weights=None, drop_last=True):
     """
     This function gets a list og images path, their labels and meta-data (if applicable) and returns a DataLoader
@@ -87,7 +96,8 @@ def get_data_loader (imgs_path, labels, meta_data=None, transform=None, batch_si
     num_workers (int): the number thread in CPU to load the dataset. If it's not informed the default is 0 (which
 
 
-    :param imgs_path (list): a list of string containing the images path
+    :param imgs_path_clinical (list): a list of string containing the clinical images path
+    :param imgs_path_dermatoscope (list): a list of string containing the dermatoscope images path
     :param labels (list): a list of labels for each image
     :param meta_data (list, optional): a list of meta-data regarding each image. If it's None, it means there's
     no meta-data. Default is None
@@ -104,7 +114,7 @@ def get_data_loader (imgs_path, labels, meta_data=None, transform=None, batch_si
     :return (torch.utils.data.DataLoader): a dataloader with the dataset and the chose params
     """
 
-    dt = MyDataset(imgs_path, labels, meta_data, transform)
+    dt = MyDataset(imgs_path_clinical, imgs_path_dermatoscope, labels, meta_data, transform)
 
     sampler = None
     if batch_weights is not None:

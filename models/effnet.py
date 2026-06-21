@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import torch
 from torch import nn
 from .metablock import MetaBlock
 
@@ -10,6 +11,8 @@ class MyEffnet (nn.Module):
                  comb_method=None, comb_config=None, n_feat_conv=1792):
 
         super(MyEffnet, self).__init__()
+
+        n_feat_conv_fused = n_feat_conv * 2
 
         _n_meta_data = 0
         if comb_method is not None:
@@ -34,10 +37,9 @@ class MyEffnet (nn.Module):
         self.efnet = efnet
         self.avg_pooling = nn.AdaptiveAvgPool2d(1)
 
-        # Feature reducer
         if neurons_reducer_block > 0:
             self.reducer_block = nn.Sequential(
-                nn.Linear(n_feat_conv, neurons_reducer_block),
+                nn.Linear(n_feat_conv_fused, neurons_reducer_block),
                 nn.BatchNorm1d(neurons_reducer_block),
                 nn.ReLU(),
                 nn.Dropout(p=p_dropout)
@@ -45,33 +47,44 @@ class MyEffnet (nn.Module):
         else:
             self.reducer_block = None        
 
-        # Here comes the extra information (if applicable)
         if neurons_reducer_block > 0:
             self.classifier = nn.Linear(neurons_reducer_block + _n_meta_data, num_class)
         else:
-            self.classifier = nn.Linear(n_feat_conv + _n_meta_data, num_class)
+            self.classifier = nn.Linear(n_feat_conv_fused + _n_meta_data, num_class)
 
 
-    def forward(self, img, meta_data=None):
+    def forward(self, img_clinical, img_dermatoscope, meta_data=None, return_features=False):
 
-        # Checking if when passing the metadata, the combination method is set
         if meta_data is not None and self.comb is None:
             raise Exception("There is no combination method defined but you passed the metadata to the model!")
         if meta_data is None and self.comb is not None:
             raise Exception("You must pass meta_data since you're using a combination method!")
 
-        x = self.efnet.extract_features(img)
-        x = self.avg_pooling(x)
+        # Extração e Pooling
+        feat_clin = self.efnet.extract_features(img_clinical)
+        feat_clin = self.avg_pooling(feat_clin)
+        
+        feat_derm = self.efnet.extract_features(img_dermatoscope)
+        feat_derm = self.avg_pooling(feat_derm)
+
+        # Achatamento
+        feat_clin = feat_clin.view(feat_clin.size(0), -1)
+        feat_derm = feat_derm.view(feat_derm.size(0), -1)
+
+        # Fusão
+        x = torch.cat((feat_clin, feat_derm), dim=1)
 
         if self.comb == None:
-            x = x.view(x.size(0), -1)  # flatting
             if self.reducer_block is not None:
-                x = self.reducer_block(x)  # feat reducer block
+                x = self.reducer_block(x)  
         elif isinstance(self.comb, MetaBlock):
-            x = x.view(x.size(0), self.comb_feat_maps, 32, -1).squeeze(-1)  # getting the feature maps
-            x = self.comb(x, meta_data.float())  # applying metablock
-            x = x.view(x.size(0), -1)  # flatting
+            x = x.view(x.size(0), self.comb_feat_maps, -1)  
+            x = self.comb(x, meta_data.float()) 
+            x = x.view(x.size(0), -1) 
             if self.reducer_block is not None:
-                x = self.reducer_block(x)  # feat reducer block
+                x = self.reducer_block(x)  
+
+        if return_features:
+            return x
 
         return self.classifier(x)

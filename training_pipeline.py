@@ -3,6 +3,7 @@
 # Configuring importing libraries
 ######################################################################################
 from utils.loader import get_data_loader
+from utils.svm import CNNSVM_Wrapper, train_svm
 from utils.train import fit_model
 from utils.eval import test_model
 from utils.data_algumentation import ImgTrainTransform, ImgEvalTransform
@@ -29,23 +30,16 @@ from sentence_transformers import SentenceTransformer
 
 # Getting the local configurations
 CLASS_TYPE = "triage" # triage or diag
-IMG_TYPE = "clinical" # clinical, dermatoscope or both
+IMG_TYPE = "both" # clinical, dermatoscope or both
 
 with open("./config.json") as json_file:
     _LOCAL_CONFIG = json.load(json_file)
 
 _DATASET_BASE_PATH = _LOCAL_CONFIG["output_folder_path"]
-_CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_{IMG_TYPE}_folders_raw.csv")
-_JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_{IMG_TYPE}.json")
-
-_CSV_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_dermatoscope_folders_raw.csv")
-_JSON_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_dermatoscope.json")
-if IMG_TYPE == "dermatoscope":
-    _CSV_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_clinical_folders_raw.csv")
-    _JSON_PATH_TEST = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_clinical.json")
-if IMG_TYPE == "both":
-    _CSV_PATH_TEST = None
-    _JSON_PATH_TEST = None
+_CSV_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"pad-ufes-26-{CLASS_TYPE}_{IMG_TYPE}_SVM_folders_raw.csv")
+_JSON_PATH_TRAIN = os.path.join(_DATASET_BASE_PATH, f"anamnese_raw_{CLASS_TYPE}_{IMG_TYPE}_SVM.json")
+_CSV_PATH_TEST = None
+_JSON_PATH_TEST = None
 
 # Avoiding the tokenizers warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -55,7 +49,8 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hu
 
 TARGET_COLUMN = "histoMacroCID"
 TARGET_NUMBER_COLUMN = "diagnostic-number"
-IMG_COLUMN = "img-id"
+IMG_COLUMN_CLINICAL = "img-id-clinical"
+IMG_COLUMN_DERMATOSCOPE = "img-id-dermatoscope"
 
 # Starting sacred experiment
 ex = Experiment()
@@ -89,7 +84,7 @@ def cnfg():
     _sched_factor = 0.1
     _sched_min_lr = 1e-6
     _sched_patience = 10
-    _early_stop = 15
+    _early_stop = 10
     _metric_early_stop = None
     _weights = "frequency"       
     
@@ -132,13 +127,15 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     train_csv_folder = csv_all_folders[ (csv_all_folders['folder'] != _folder) ]
 
     # Loading validation data
-    val_imgs_id = val_csv_folder[IMG_COLUMN].values
-    val_imgs_path = ["{}".format(img_id) for img_id in val_imgs_id]
+    val_imgs_clinical_id = val_csv_folder[IMG_COLUMN_CLINICAL].values
+    val_imgs_path_clinical = ["{}".format(img_id) for img_id in val_imgs_clinical_id]
+    val_imgs_dermatoscope_id = val_csv_folder[IMG_COLUMN_DERMATOSCOPE].values
+    val_imgs_path_dermatoscope = ["{}".format(img_id) for img_id in val_imgs_dermatoscope_id]
     val_labels = val_csv_folder[TARGET_NUMBER_COLUMN].values
     val_meta_data = list()
 
     if _use_meta_data:
-        for img_id in val_imgs_id:
+        for img_id in val_imgs_clinical_id:
             doc_vec = sentence_model.encode(meta_json[img_id], show_progress_bar=False)            
             val_meta_data.append(doc_vec)   
         val_meta_data = np.asarray(val_meta_data)
@@ -146,14 +143,14 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     else:
         print("-- No metadata")
         val_meta_data = None
-    val_data_loader = get_data_loader (val_imgs_path, val_labels, val_meta_data, transform=ImgEvalTransform(),
+    val_data_loader = get_data_loader (val_imgs_path_clinical, val_imgs_path_dermatoscope, val_labels, val_meta_data, transform=ImgEvalTransform(),
                                        batch_size=_batch_size, shuf=True, num_workers=16, pin_memory=True, drop_last=False)
     print("-- Validation partition loaded with {} images".format(len(val_data_loader)*_batch_size))
 
 
     ####################################################################################################################
 
-    ser_lab_freq = train_csv_folder.groupby([TARGET_COLUMN])[IMG_COLUMN].count()
+    ser_lab_freq = train_csv_folder.groupby([TARGET_COLUMN])[IMG_COLUMN_CLINICAL].count()
     _labels_name = ser_lab_freq.index.values
     _freq = ser_lab_freq.values
     print(ser_lab_freq)
@@ -169,12 +166,14 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
 
   
     print("- Loading training data...")
-    train_imgs_id = train_csv_folder[IMG_COLUMN].values
-    train_imgs_path = ["{}".format(img_id) for img_id in train_imgs_id]
+    train_imgs_clinical_id = train_csv_folder[IMG_COLUMN_CLINICAL].values
+    train_imgs_path_clinical = ["{}".format(img_id) for img_id in train_imgs_clinical_id]
+    train_imgs_dermatoscope_id = train_csv_folder[IMG_COLUMN_DERMATOSCOPE].values
+    train_imgs_path_dermatoscope = ["{}".format(img_id) for img_id in train_imgs_dermatoscope_id]
     train_labels = train_csv_folder[TARGET_NUMBER_COLUMN].values
     train_meta_data = list()
     if _use_meta_data:
-        for img_id in train_imgs_id:
+        for img_id in train_imgs_clinical_id:
             doc_vec = sentence_model.encode(meta_json[img_id], show_progress_bar=False)           
             train_meta_data.append(doc_vec)     
         train_meta_data = np.asarray(train_meta_data)   
@@ -183,7 +182,7 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
         print("-- No metadata")
         train_meta_data = None
 
-    train_data_loader = get_data_loader (train_imgs_path, train_labels, train_meta_data, transform=ImgTrainTransform(),
+    train_data_loader = get_data_loader (train_imgs_path_clinical, train_imgs_path_dermatoscope, train_labels, train_meta_data, transform=ImgTrainTransform(),
                                        batch_size=_batch_size, shuf=True, num_workers=16, pin_memory=True)
     print("-- Training partition loaded with {} images".format(len(train_data_loader)*_batch_size))
     print("-"*50)
@@ -196,10 +195,6 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     ####################################################################################################################
 
     loss_fn = nn.CrossEntropyLoss(weight=torch.Tensor(_weights).cuda())
-    # loss_fn = nn.CrossEntropyLoss(weight=torch.Tensor(_weights_ens).cuda())
-
-    # loss_fn = nn.CrossEntropyLoss()
-
 
     if _optmizer == "adam":
         optimizer = optim.Adam(model.parameters(), lr=_lr_init)
@@ -218,13 +213,44 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
                epochs_early_stop=_early_stop, save_folder=_save_folder, initial_model=None, metric_early_stop=_metric_early_stop,
                device=None, schedule_lr=scheduler_lr, config_bot=None, model_name="CNN", resume_train=False,
                history_plot=True, val_metrics=["balanced_accuracy"], best_metric=_best_metric)
+    
     ####################################################################################################################
 
-    # Testing the validation partition
-    print("- Evaluating the validation partition...")
-    test_model (model, val_data_loader, checkpoint_path=_checkpoint_best, loss_fn=loss_fn, save_pred=True,
-                partition_name='eval', metrics_to_comp='all', class_names=_labels_name, metrics_options=_metric_options,
-                apply_softmax=True, verbose=False)
+    print("\n- Avaliando a CNN Pura na validação...")
+    checkpoint = torch.load(_checkpoint_best)
+    model.load_state_dict(checkpoint['model_state_dict'])
+
+    _metric_opt_cnn = _metric_options.copy()
+    _metric_opt_cnn['save_all_path'] = os.path.join(_save_folder, "test_pred_CNN")
+    
+    test_model(model, val_data_loader, checkpoint_path=None, loss_fn=loss_fn, save_pred=True,
+               partition_name='eval_CNN', metrics_to_comp='all', class_names=_labels_name, metrics_options=_metric_opt_cnn,
+               apply_softmax=True, verbose=False)
+    
+    #####################################################################################################################
+    
+    # === IMPLEMENTAÇÃO DO ARTIGO (CNN-SVM) ===
+
+    print("\n- Iniciando fluxo do Artigo (CNN + SVM)...")
+
+    _weights_dict = {i: w for i, w in enumerate(_weights)}
+    
+    # Treina a SVM usando a CNN
+    svm_model = train_svm(model, train_data_loader, _weights_dict, _save_folder)
+    
+    # Cria o nosso modelo híbrido que engana o PyTorch
+    hybrid_model = CNNSVM_Wrapper(model, svm_model)
+    
+    # Criamos opções de métricas específicas para a pasta da SVM
+    _metric_opt_svm = _metric_options.copy()
+    _metric_opt_svm['save_all_path'] = os.path.join(_save_folder, "test_pred_SVM")
+    
+    print("\n- Avaliando o Híbrido CNN-SVM na validação...")
+    # OBS IMPORTANTE: apply_softmax=False aqui! A SVM já retorna as probabilidades entre 0 e 1.
+    test_model(hybrid_model, val_data_loader, checkpoint_path=None, loss_fn=loss_fn, save_pred=True,
+               partition_name='eval_SVM', metrics_to_comp='all', class_names=_labels_name, metrics_options=_metric_opt_svm,
+               apply_softmax=False, verbose=False)
+    
     ####################################################################################################################
 
     # Try to perform the test partition if it exists
@@ -235,15 +261,17 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
         print("- There is no test partition. It's all done!")
         return   
         
-    test_imgs_id = csv_test[IMG_COLUMN].values
-    test_imgs_path = ["{}".format(img_id) for img_id in test_imgs_id]
+    test_imgs_clinical_id = csv_test[IMG_COLUMN_CLINICAL].values
+    test_imgs_dermatoscope_id = csv_test[IMG_COLUMN_DERMATOSCOPE].values
+    test_imgs_path_clinical = ["{}".format(img_id) for img_id in test_imgs_clinical_id]
+    test_imgs_path_dermatoscope = ["{}".format(img_id) for img_id in test_imgs_dermatoscope_id]
     test_labels = csv_test[TARGET_NUMBER_COLUMN].values
     test_meta_data = list()
 
     with open(_JSON_PATH_TEST) as json_file:
         meta_json = json.load(json_file)
     if _use_meta_data:
-        for img_id in test_imgs_id:
+        for img_id in test_imgs_clinical_id:
             doc_vec = sentence_model.encode(meta_json[img_id], show_progress_bar=False)           
             test_meta_data.append(doc_vec)     
         test_meta_data = np.asarray(test_meta_data)   
@@ -256,7 +284,7 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
         'save_all_path': os.path.join(_save_folder, "test_pred"),
         'pred_name_scores': 'predictions.csv',
         'normalize_conf_matrix': True}
-    test_data_loader = get_data_loader(test_imgs_path, test_labels, test_meta_data, transform=ImgEvalTransform(),
+    test_data_loader = get_data_loader(test_imgs_path_clinical, test_imgs_path_dermatoscope, test_labels, test_meta_data, transform=ImgEvalTransform(),
                                        batch_size=_batch_size, shuf=False, num_workers=16, pin_memory=True)
     print("-" * 50)
 

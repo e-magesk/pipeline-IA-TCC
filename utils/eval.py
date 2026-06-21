@@ -65,27 +65,27 @@ def metrics_for_eval (model, data_loader, device, loss_fn, topk=2, get_balanced_
                 # In data we may have imgs, labels and extra info. If extra info is [], it means we don't have it
                 # for the this training case. Imgs came in data[0], labels in data[1] and extra info in data[2]
                 try:
-                    images_batch, labels_batch, meta_data_batch,_  = data
+                    images_batch_clinical, images_batch_dermatoscope, labels_batch, meta_data_batch,_, _  = data
                 except ValueError:
-                    images_batch, labels_batch = data
+                    images_batch_clinical, images_batch_dermatoscope, labels_batch = data
                     meta_data_batch = []
                 except:
                     break
 
                 if len(meta_data_batch):
                     # Moving the data to the deviced that we set above
-                    images_batch, labels_batch = images_batch.to(device), labels_batch.to(device)
+                    images_batch_clinical, images_batch_dermatoscope, labels_batch = images_batch_clinical.to(device), images_batch_dermatoscope.to(device), labels_batch.to(device)
                     meta_data_batch = meta_data_batch.to(device)
                     meta_data_batch = meta_data_batch.float()
 
                     # Doing the forward pass using meta_data
-                    pred_batch = model(images_batch, meta_data_batch)
+                    pred_batch = model(images_batch_clinical, images_batch_dermatoscope, meta_data_batch)
                 else:
                     # Moving the data to the device that we set above
-                    images_batch, labels_batch = images_batch.to(device), labels_batch.to(device)
+                    images_batch_clinical, images_batch_dermatoscope, labels_batch = images_batch_clinical.to(device), images_batch_dermatoscope.to(device), labels_batch.to(device)
 
                     # Doing the forward pass without using meta-data
-                    pred_batch = model(images_batch)
+                    pred_batch = model(images_batch_clinical, images_batch_dermatoscope)
 
                 # Computing the loss
                 L = loss_fn(pred_batch, labels_batch)
@@ -154,12 +154,12 @@ def test_model (model, data_loader, checkpoint_path=None, loss_fn=None, device=N
     # setting the model to evaluation mode
     model.eval()
 
-    def _get_predictions (model, images_batch, meta_data_batch=None):        
+    def _get_predictions (model, images_batch_clinical, images_batch_dermatoscope, meta_data_batch=None):        
         with torch.no_grad():
             if meta_data_batch is None:
-                pred_batch = model(images_batch)
+                pred_batch = model(images_batch_clinical, images_batch_dermatoscope)
             else:
-                pred_batch = model(images_batch, meta_data_batch)
+                pred_batch = model(images_batch_clinical, images_batch_dermatoscope, meta_data_batch)
         return pred_batch
 
     if checkpoint_path is not None:
@@ -192,9 +192,9 @@ def test_model (model, data_loader, checkpoint_path=None, loss_fn=None, device=N
             # for the this training case. Images came in data[0], labels in data[1], meta_data in data[2], and image_id
             # in data[3]
             try:
-                images_batch, labels_batch, meta_data_batch, img_id = data
+                images_batch_clinical, images_batch_dermatoscope, labels_batch, meta_data_batch, img_id_clinical, img_id_dermatoscope = data
             except ValueError:
-                images_batch, labels_batch = data
+                images_batch_clinical, images_batch_dermatoscope, labels_batch = data
                 meta_data_batch = []
                 img_id = None
             except:
@@ -202,26 +202,28 @@ def test_model (model, data_loader, checkpoint_path=None, loss_fn=None, device=N
 
             if len(meta_data_batch):
                 # Moving the data to the device that we set above
-                images_batch = images_batch.to(device)
+                images_batch_clinical = images_batch_clinical.to(device)
+                images_batch_dermatoscope = images_batch_dermatoscope.to(device)
                 if len(labels_batch):
                     labels_batch = labels_batch.to(device)
                 meta_data_batch = meta_data_batch.to(device)
                 meta_data_batch = meta_data_batch.float()
 
                 # Doing the forward pass using meta-data
-                pred_batch = _get_predictions (model, images_batch, meta_data_batch)
+                pred_batch = _get_predictions (model, images_batch_clinical, images_batch_dermatoscope, meta_data_batch)
             elif len(labels_batch):
                 # Moving the data to the device that we set above
-                images_batch, labels_batch = images_batch.to(device), labels_batch.to(device)
+                images_batch_clinical, images_batch_dermatoscope, labels_batch = images_batch_clinical.to(device), images_batch_dermatoscope.to(device), labels_batch.to(device)
 
                 # Doing the forward pass without using meta-data
-                pred_batch = _get_predictions(model, images_batch)
+                pred_batch = _get_predictions(model, images_batch_clinical, images_batch_dermatoscope)
             else:
                 # Moving the data to the deviced that we set above
-                images_batch = images_batch.to(device)
+                images_batch_clinical = images_batch_clinical.to(device)
+                images_batch_dermatoscope = images_batch_dermatoscope.to(device)
 
                 # Doing the forward pass without using meta_data
-                pred_batch = _get_predictions(model, images_batch)
+                pred_batch = _get_predictions(model, images_batch_clinical, images_batch_dermatoscope)
 
             # Computing the loss
             if len(labels_batch):
@@ -239,7 +241,7 @@ def test_model (model, data_loader, checkpoint_path=None, loss_fn=None, device=N
                 pred_batch_np = pred_batch.cpu().numpy()
 
             # updating the scores
-            metrics.update_scores(labels_batch_np, pred_batch_np, img_id)
+            metrics.update_scores(labels_batch_np, pred_batch_np, img_id_clinical)
 
             # Updating tqdm
             if metrics.metrics_names is None:
