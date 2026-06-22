@@ -233,7 +233,10 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
         print("- Loading test data...")
     except:
         print("- There is no test partition. It's all done!")
-        return   
+        return
+    
+    ids_val = val_csv_folder['lesion-id'].unique()
+    csv_test = csv_test[csv_test['lesion-id'].isin(ids_val)]
         
     test_imgs_id = csv_test[IMG_COLUMN].values
     test_imgs_path = ["{}".format(img_id) for img_id in test_imgs_id]
@@ -262,6 +265,6 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
 
     # Testing the test partition
     print("\n- Evaluating the validation partition...")
-    test_model(model, test_data_loader, checkpoint_path=None, metrics_to_comp="all",
+    test_model(model, test_data_loader, checkpoint_path=_checkpoint_best, metrics_to_comp="all",
                class_names=_labels_name, metrics_options=_metric_options, save_pred=True, verbose=False)
     ####################################################################################################################
