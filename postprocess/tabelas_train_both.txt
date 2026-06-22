@@ -1,27 +1,27 @@
 % --- TABELA: TRIAGE (BOTH) ---
 
-% Sem dados disponíveis para triage
-
-
-% --- TABELA: DIAG (BOTH) ---
-
 \begin{table}[htbp]
     \centering
-    \caption{Resultados de avaliação do classificador de Diag (Imagens Combinadas).}
-    \label{tab:resultados_diag_both}
+    \caption{Resultados de avaliação do classificador de Triage (Imagens Combinadas).}
+    \label{tab:resultados_triage_both}
     \resizebox{\textwidth}{!}{
     \begin{tabular}{lcccc}
         \toprule
         \textbf{Backbone} & \textbf{BACC} & \textbf{ACC} & \textbf{AUC} & \textbf{F1-MACRO} \\
         \midrule
-        \textbf{Caformer-s18} & $0.64 \pm 0.02$ & $0.69 \pm 0.01$ & $0.90 \pm 0.01$ & $0.61 \pm 0.03$ \\
-        \textbf{Davit-tiny} & $0.63 \pm 0.03$ & $0.67 \pm 0.01$ & $0.89 \pm 0.01$ & $0.59 \pm 0.02$ \\
-        \textbf{EfficientNet-b4} & $0.59 \pm 0.04$ & $0.63 \pm 0.02$ & $0.86 \pm 0.02$ & $0.56 \pm 0.04$ \\
-        \textbf{Maxvit-tiny} & $0.63 \pm 0.01$ & $0.68 \pm 0.02$ & $0.89 \pm 0.01$ & $0.60 \pm 0.02$ \\
-        \textbf{MobileNet-v2} & $0.61 \pm 0.03$ & $0.64 \pm 0.01$ & $0.88 \pm 0.01$ & $0.57 \pm 0.03$ \\
-        \textbf{Mvit2-small} & $0.63 \pm 0.03$ & $0.68 \pm 0.02$ & $0.90 \pm 0.01$ & $0.60 \pm 0.02$ \\
-        \textbf{ResNet-50} & $0.61 \pm 0.03$ & $0.64 \pm 0.02$ & $0.88 \pm 0.02$ & $0.57 \pm 0.03$ \\
+        \textbf{Caformer-s18} & $0.76 \pm 0.03$ & $0.82 \pm 0.03$ & $0.93 \pm 0.01$ & $0.73 \pm 0.04$ \\
+        \textbf{Davit-tiny} & $0.76 \pm 0.03$ & $0.82 \pm 0.03$ & $0.93 \pm 0.02$ & $0.74 \pm 0.04$ \\
+        \textbf{EfficientNet-b4} & $0.71 \pm 0.03$ & $0.77 \pm 0.04$ & $0.90 \pm 0.02$ & $0.68 \pm 0.04$ \\
+        \textbf{Maxvit-tiny} & $0.73 \pm 0.04$ & $0.81 \pm 0.03$ & $0.93 \pm 0.02$ & $0.71 \pm 0.03$ \\
+        \textbf{MobileNet-v3} & $0.72 \pm 0.03$ & $0.78 \pm 0.04$ & $0.92 \pm 0.01$ & $0.68 \pm 0.04$ \\
+        \textbf{Mvit2-small} & $0.74 \pm 0.04$ & $0.82 \pm 0.04$ & $0.93 \pm 0.01$ & $0.72 \pm 0.05$ \\
+        \textbf{ResNet-50} & $0.73 \pm 0.03$ & $0.78 \pm 0.03$ & $0.91 \pm 0.01$ & $0.69 \pm 0.04$ \\
         \bottomrule
     \end{tabular}
     }
 \end{table}
+
+
+% --- TABELA: DIAG (BOTH) ---
+
+% Sem dados disponíveis para diag
