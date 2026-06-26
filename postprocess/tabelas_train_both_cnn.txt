@@ -1,0 +1,27 @@
+% --- TABELA: TRIAGE (BOTH) ---
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resultados de avaliação do classificador de Triage (Imagens Combinadas).}
+    \label{tab:resultados_triage_both}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Backbone} & \textbf{BACC} & \textbf{ACC} & \textbf{AUC} & \textbf{F1-MACRO} \\
+        \midrule
+        \textbf{Caformer-s18} & $0.78 \pm 0.02$ & $0.81 \pm 0.03$ & $0.93 \pm 0.01$ & $0.72 \pm 0.04$ \\
+        \textbf{Davit-tiny} & $0.79 \pm 0.02$ & $0.81 \pm 0.03$ & $0.93 \pm 0.01$ & $0.73 \pm 0.05$ \\
+        \textbf{EfficientNet-b4} & $0.73 \pm 0.02$ & $0.77 \pm 0.02$ & $0.91 \pm 0.03$ & $0.70 \pm 0.03$ \\
+        \textbf{Maxvit-tiny} & $0.76 \pm 0.04$ & $0.82 \pm 0.02$ & $0.93 \pm 0.00$ & $0.72 \pm 0.02$ \\
+        \textbf{MobileNet-v3} & $0.75 \pm 0.02$ & $0.77 \pm 0.02$ & $0.92 \pm 0.01$ & $0.68 \pm 0.02$ \\
+        \textbf{Mvit2-small} & $0.77 \pm 0.03$ & $0.82 \pm 0.04$ & $0.94 \pm 0.01$ & $0.73 \pm 0.04$ \\
+        \textbf{ResNet-50} & $0.74 \pm 0.03$ & $0.77 \pm 0.03$ & $0.91 \pm 0.01$ & $0.69 \pm 0.04$ \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+
+% --- TABELA: DIAG (BOTH) ---
+
+% Sem dados disponíveis para diag

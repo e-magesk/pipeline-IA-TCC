@@ -60,6 +60,7 @@ def statistical_test(data, alg_names, pv_friedman=0.05, pv_wilcoxon=0.05, verbos
             else:
                 out += ' | They are NOT statistically different!'
             out += '\n'
+            # print('Passei por aqui')
             return np.round(pv, 6)
 
     out += '-' * 50

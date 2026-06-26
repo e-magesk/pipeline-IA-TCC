@@ -29,7 +29,7 @@ from sentence_transformers import SentenceTransformer
 
 # Getting the local configurations
 CLASS_TYPE = "triage" # triage or diag
-IMG_TYPE = "clinical" # clinical, dermatoscope or both
+IMG_TYPE = "both" # clinical, dermatoscope or both
 
 with open("./config.json") as json_file:
     _LOCAL_CONFIG = json.load(json_file)
@@ -89,7 +89,7 @@ def cnfg():
     _sched_factor = 0.1
     _sched_min_lr = 1e-6
     _sched_patience = 10
-    _early_stop = 15
+    _early_stop = 10
     _metric_early_stop = None
     _weights = "frequency"       
     
