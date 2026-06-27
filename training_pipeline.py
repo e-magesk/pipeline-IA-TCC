@@ -231,25 +231,25 @@ def main (_folder, _lr_init, _sched_factor, _sched_min_lr, _sched_patience, _bat
     
     # === IMPLEMENTAÇÃO DO ARTIGO (CNN-SVM) ===
 
-    print("\n- Iniciando fluxo do Artigo (CNN + SVM)...")
+    # print("\n- Iniciando fluxo do Artigo (CNN + SVM)...")
 
-    _weights_dict = {i: w for i, w in enumerate(_weights)}
+    # _weights_dict = {i: w for i, w in enumerate(_weights)}
     
-    # Treina a SVM usando a CNN
-    svm_model = train_svm(model, train_data_loader, _weights_dict, _save_folder)
+    # # Treina a SVM usando a CNN
+    # svm_model = train_svm(model, train_data_loader, _weights_dict, _save_folder)
     
-    # Cria o nosso modelo híbrido que engana o PyTorch
-    hybrid_model = CNNSVM_Wrapper(model, svm_model)
+    # # Cria o nosso modelo híbrido que engana o PyTorch
+    # hybrid_model = CNNSVM_Wrapper(model, svm_model)
     
-    # Criamos opções de métricas específicas para a pasta da SVM
-    _metric_opt_svm = _metric_options.copy()
-    _metric_opt_svm['save_all_path'] = os.path.join(_save_folder, "test_pred_SVM")
+    # # Criamos opções de métricas específicas para a pasta da SVM
+    # _metric_opt_svm = _metric_options.copy()
+    # _metric_opt_svm['save_all_path'] = os.path.join(_save_folder, "test_pred_SVM")
     
-    print("\n- Avaliando o Híbrido CNN-SVM na validação...")
-    # OBS IMPORTANTE: apply_softmax=False aqui! A SVM já retorna as probabilidades entre 0 e 1.
-    test_model(hybrid_model, val_data_loader, checkpoint_path=None, loss_fn=loss_fn, save_pred=True,
-               partition_name='eval_SVM', metrics_to_comp='all', class_names=_labels_name, metrics_options=_metric_opt_svm,
-               apply_softmax=False, verbose=False)
+    # print("\n- Avaliando o Híbrido CNN-SVM na validação...")
+    # # OBS IMPORTANTE: apply_softmax=False aqui! A SVM já retorna as probabilidades entre 0 e 1.
+    # test_model(hybrid_model, val_data_loader, checkpoint_path=None, loss_fn=loss_fn, save_pred=True,
+    #            partition_name='eval_SVM', metrics_to_comp='all', class_names=_labels_name, metrics_options=_metric_opt_svm,
+    #            apply_softmax=False, verbose=False)
     
     ####################################################################################################################
 
